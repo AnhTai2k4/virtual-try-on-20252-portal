@@ -1,6 +1,14 @@
 <template lang="pug">
 AppProvider(:i18n="locales")
   router-view
+
+ui-nav-menu
+  a(href="/", rel="home") Dashboard
+  a(href="/products") Products
+  a(href="/customizes") Customize
+  a(href="/analytics") Analytics
+  a(href="/manages") Manage plan
+  a(href="/settings") Settings
 </template>
 
 <script setup lang="ts">

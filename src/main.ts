@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import router from '@/router';
 import PolarisVue from '@ownego/polaris-vue';
 import '@ownego/polaris-vue/dist/style.css';
-
+import './assets/tailwind.css'
 import App from './App.vue';
 
 const app = createApp(App);

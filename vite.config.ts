@@ -2,11 +2,13 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
 import path from 'path';
+import tailwindcss from '@tailwindcss/vite' // 1. Import plugin mới
 
 export default defineConfig({
   plugins: [
     vue(),
     svgLoader(),
+    tailwindcss(), 
   ],
   define: {
     'process.env': {},
