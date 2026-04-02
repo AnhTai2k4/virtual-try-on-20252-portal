@@ -14,7 +14,6 @@ ui-nav-menu
 <script setup lang="ts">
 import locales from '@ownego/polaris-vue/dist/locales/en.json';
 </script>
-
 <style lang="scss">
 @use '@/scss/app.scss';
 </style>

@@ -1,1 +1,3 @@
-<<template>Customize Page</template>>
+<template lang=""pug>
+  h1 Customize page
+</template>
