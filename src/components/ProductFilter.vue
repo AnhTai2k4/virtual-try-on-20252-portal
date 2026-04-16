@@ -120,7 +120,7 @@ const fetchAllMetadata = async () => {
       `
     };
 
-    const res = await fetch('shopify:admin/api/2024-04/graphql.json', {
+    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(query),

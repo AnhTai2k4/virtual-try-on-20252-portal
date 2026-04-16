@@ -206,7 +206,7 @@ const fetchProducts = async () => {
       variables: { first: 50, searchQuery: finalQuery } 
     };
 
-    const response = await fetch('shopify:admin/api/2024-04/graphql.json', {
+    const response = await fetch('shopify:admin/api/2026-04/graphql.json', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery),
     });
 
@@ -243,7 +243,7 @@ const toggleVto = async (product) => {
       query: `mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { userErrors { field message } } }`,
       variables: { metafields: [{ ownerId: product.id, namespace: "custom", key: "vto_enabled", type: "boolean", value: product.vtoEnabled.toString() }] }
     };
-    const response = await fetch('shopify:admin/api/2024-04/graphql.json', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery) });
+    const response = await fetch('shopify:admin/api/2026-04/graphql.json', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery) });
     const result = await response.json();
     if (result.data?.metafieldsSet?.userErrors?.length > 0) throw new Error(result.data.metafieldsSet.userErrors[0].message);
     
@@ -286,7 +286,7 @@ const fetchCollections = async () => {
         }
       `
     };
-    const res = await fetch('shopify:admin/api/2024-04/graphql.json', {
+    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery),
     });
     const result = await res.json();
@@ -352,7 +352,7 @@ const toggleCollectionVto = async (collection) => {
         variables: { metafields }
       };
 
-      const res = await fetch('shopify:admin/api/2024-04/graphql.json', {
+      const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery)
       });
       const result = await res.json();
