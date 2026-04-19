@@ -1,283 +1,160 @@
 <template lang="pug">
+ui-title-bar(title="Taitta VTON - Products")
+
 Page
-  //- ==========================================
-  //- KHỐI ĐIỀU HƯỚNG TABS (ACTIONS)
-  //- ==========================================
-  div(class="mb-6")
-    div(class="text-lg font-bold text-gray-800 mb-3 uppercase tracking-wide") Actions
-    div(class="flex items-center gap-3")
-      button(
-        @click="activeTab = 'collections'",
-        :class="activeTab === 'collections' ? 'bg-gray-800 text-white border-transparent' : 'bg-white text-gray-700 border-gray-300'",
-        class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors shadow-sm"
-      ) Add collections
+  
+  
+    //- ==========================================
+    //- GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH" (INLINE)
+    //- ==========================================
+    Card(class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4")
       
-      button(
-        @click="activeTab = 'products'",
-        :class="activeTab === 'products' ? 'bg-gray-800 text-white border-transparent' : 'bg-white text-gray-700 border-gray-300'",
-        class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors shadow-sm"
-      ) Add products
-
-  //- ==========================================
-  //- GIAO DIỆN TAB: ADD PRODUCTS
-  //- ==========================================
-  Card(v-if="activeTab === 'products'", padding="0", class="mb-5", style="overflow: visible !important;")
-    div(class="flex items-center justify-between p-4 border-b border-gray-200")
-      div(class="font-medium text-gray-700") Products ({{ products.length }})
-      ProductFilter(@filter-change="handleFilterChange")
-
-    div(v-if="isLoadingPage", class="flex justify-center items-center min-h-[350px]")
-      svg(class="animate-spin h-10 w-10 text-blue-600", xmlns="http://www.w3.org/2000/svg", fill="none", viewBox="0 0 24 24")
-        circle(class="opacity-25", cx="12", cy="12", r="10", stroke="currentColor", stroke-width="4")
-        path(class="opacity-75", fill="currentColor", d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
-
-    div(v-else, class="flex flex-col min-h-[250px] pb-8")
-      div(
-        v-for="product in products",
-        :key="product.id",
-        class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors"
-      )
-        div(class="flex items-center gap-4")
-          div(class="w-12 h-16 bg-gray-100 rounded border border-gray-200 overflow-hidden flex-shrink-0")
-            img(:src="product.image", class="w-full h-full object-cover", alt="Product")
-          div
-            div(class="font-medium text-gray-900") {{ product.title }}
-            div(class="flex items-center gap-2 mt-1 text-sm text-gray-500")
-              span(:class="getBadgeClass(product.status)", class="px-2 py-0.5 rounded text-xs font-semibold tracking-wide") {{ product.status }}
-              span {{ product.imagesCount }} images
-
-        div(class="flex items-center gap-3")
-          div(class="flex items-center gap-2")
-            button(
-              @click="toggleVto(product)",
-              :disabled="product.isUpdating",
-              class="relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none border disabled:opacity-50",
-              :class="product.vtoEnabled ? 'bg-white border-green-500' : 'bg-gray-50 border-gray-300'"
+      //- HEADER
+      div(class="px-6 py-4 border-b border-gray-200 flex justify-between items-center")
+        h1(class="!text-xl font-bold text-gray-900") Choose product to launch
+        
+      //- BODY (RADIO OPTIONS)
+      div(class="p-6 space-y-5")
+        
+        //- Option 1: Specific products
+        label(class="flex items-start gap-3 cursor-pointer group")
+          div(class="pt-0.5")
+            input(
+              type="radio" 
+              v-model="launchMode" 
+              value="specific_products" 
+              @change="handleModeChange"
+              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900"
             )
-              span(class="absolute flex items-center justify-center w-4 h-4 rounded-full transition-transform duration-200 ease-in-out" :class="product.vtoEnabled ? 'translate-x-9 bg-green-500' : 'translate-x-1 bg-gray-300'")
-              span(class="absolute text-xs font-bold w-full text-center pointer-events-none" :class="product.vtoEnabled ? 'text-green-500 pr-5' : 'text-gray-500 pl-5'") {{ product.vtoEnabled ? 'On' : 'Off' }}
-            svg(v-if="product.isUpdating" class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
+          div
+            div(class="font-medium text-gray-900") Specific products
+            div(class="text-sm text-gray-500 mt-0.5") Choose products to apply this option set. Learn more about #[a(href="#" class="text-blue-600 hover:underline") apply on products]
+        
+        //- Option 2: Specific variants
+        label(class="flex items-start gap-3 cursor-pointer group")
+          div(class="pt-0.5")
+            input(
+              type="radio" 
+              v-model="launchMode" 
+              value="specific_variants" 
+              @change="handleModeChange"
+              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900"
+            )
+          div
+            div(class="font-medium text-gray-900") Specific variants
+            div(class="text-sm text-gray-500 mt-0.5") Choose specific variants to apply this option set. Learn more about #[a(href="#" class="text-blue-600 hover:underline") apply on specific variants]
+        
+        //- Option 3: All products
+        label(class="flex items-start gap-3 cursor-pointer group")
+          div(class="pt-0.5")
+            input(
+              type="radio" 
+              v-model="launchMode" 
+              value="all" 
+              @change="handleModeChange"
+              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900"
+            )
+          div
+            div(class="font-medium text-gray-900") All products
+            div(class="text-sm text-gray-500 mt-0.5") Apply this option set to all products on your store, except for those that have been applied manually or automatically.
+
+        //- ==========================================
+        //- VÙNG CHỌN SẢN PHẨM & HIỂN THỊ DANH SÁCH
+        //- ==========================================
+        div(v-if="launchMode !== 'all'" class="pt-6 border-t border-gray-200 mt-6")
+          
+          button(
+            @click="triggerPicker"
+            class="px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+          ) Choose products
+          
+          div(class="mt-4 text-sm text-gray-800 font-medium mb-3") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
+
+          //- Loading State khi đang fetch data cũ
+          div(v-if="isLoadingData" class="py-4 text-center text-sm text-gray-500 flex justify-center items-center gap-2")
+            svg(class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
               circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
               path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
+            span Đang tải danh sách hiện tại...
 
-          //- button(@click="openTemplateModal(product)" class="px-1.5 py-1 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors") Template
-          //- button(@click="openImageModal(product)" class="px-1.5 py-1 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors") Select Image
-          button(v-if="product.status === 'Custom'" class="px-2 py-1.5 text-red-500 text-sm font-medium hover:underline") Reset
-
-  //- ==========================================
-  //- GIAO DIỆN TAB: ADD COLLECTIONS
-  //- ==========================================
-  Card(v-if="activeTab === 'collections'", padding="0", class="mb-5")
-    div(class="flex items-center justify-between p-4 border-b border-gray-200")
-      div(class="font-medium text-gray-700") Collections ({{ collections.length }})
-
-    div(v-if="isLoadingCollections", class="flex justify-center items-center min-h-[350px]")
-      svg(class="animate-spin h-10 w-10 text-blue-600", xmlns="http://www.w3.org/2000/svg", fill="none", viewBox="0 0 24 24")
-        circle(class="opacity-25", cx="12", cy="12", r="10", stroke="currentColor", stroke-width="4")
-        path(class="opacity-75", fill="currentColor", d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
-
-    div(v-else, class="flex flex-col pb-4")
-      div(
-        v-for="collection in collections",
-        :key="collection.id",
-        class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors"
-      )
-        div(class="flex items-center gap-4")
-          div(class="w-14 h-14 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center")
-            img(v-if="collection.image", :src="collection.image", class="w-full h-full object-cover", alt="Collection")
-            //- Icon mặc định nếu Collection không có ảnh
-            svg(v-else, class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20")
-              path(fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd")
-          div
-            div(class="font-medium text-gray-900 text-base") {{ collection.title }}
-            div(class="flex items-center gap-2 mt-1 text-sm text-gray-500")
-              //- Hiển thị Badge Auto / VTO Off
-              span(
-                :class="getBadgeClass(collection.status)", 
-                class="px-2 py-0.5 rounded text-xs font-semibold tracking-wide"
-              ) {{ collection.status }}
-              span {{ collection.productsCount }} products
-
-        div(class="flex items-center gap-3")
-          button(
-            @click="toggleCollectionVto(collection)",
-            :disabled="collection.isUpdating || collection.productsCount === 0",
-            class="relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none border disabled:opacity-50",
-            :class="collection.vtoEnabled ? 'bg-white border-green-500' : 'bg-gray-50 border-gray-300'"
-          )
-            span(class="absolute flex items-center justify-center w-4 h-4 rounded-full transition-transform duration-200 ease-in-out" :class="collection.vtoEnabled ? 'translate-x-9 bg-green-500' : 'translate-x-1 bg-gray-300'")
-            span(class="absolute text-xs font-bold w-full text-center pointer-events-none" :class="collection.vtoEnabled ? 'text-green-500 pr-5' : 'text-gray-500 pl-5'") {{ collection.vtoEnabled ? 'On' : 'Off' }}
-          
-          svg(v-if="collection.isUpdating" class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
+          //- Danh sách Item đã chọn
+          div(v-else class="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar")
+            div(
+              v-for="(item, index) in selectedItems" 
+              :key="item.id" 
+              class="flex items-center justify-between p-2 bg-white rounded-lg group"
+            )
+              div(class="flex items-center gap-4")
+                img(v-if="item.image" :src="item.image" class="w-10 h-10 rounded border border-gray-200 object-cover")
+                div(class="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400" v-else) 📦
+                span(class="text-sm text-gray-800") {{ item.title }}
+              
+              button(
+                @click="removeItem(index)" 
+                class="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors"
+                title="Remove item"
+              )
+                svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+                  path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16")
+      //- FOOTER ACTIONS
+      div(class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50")
+        button(
+          @click="resetSelection"
+          class="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm"
+        ) Cancel
+        
+        button(
+          @click="applySettings"
+          :disabled="isApplying"
+          class="px-6 py-2 text-sm font-medium text-white bg-[#1a1a1a] rounded-lg hover:bg-black shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+        ) 
+          span(v-if="!isApplying") Apply
+          span(v-else) Applying...
+          svg(v-if="isApplying" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
             circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
             path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
 
-  //- ==========================================
-  //- MODALS
-  //- ==========================================
-  TemplateModal(:isOpen="isTemplateModalOpen" :product="selectedProduct" :templates="templates" @close="isTemplateModalOpen = false")
-  ImageModal(:isOpen="isImageModalOpen" :product="selectedProduct" @close="isImageModalOpen = false")
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 
-import ProductFilter from '../components/ProductFilter.vue';
-import TemplateModal from '../components/TemplateModal.vue';
-import ImageModal from '../components/ImageModal.vue';
+// --- TRẠNG THÁI UI ---
+const launchMode = ref('specific_products');
+const selectedItems = ref([]);
+const isLoadingData = ref(false);
+const isApplying = ref(false);
 
-// --- STATE ĐIỀU HƯỚNG TABS ---
-const activeTab = ref('products'); // Mặc định mở tab Products
+// --- LƯU TRỮ TRẠNG THÁI GỐC (Dùng để so sánh Tắt/Bật) ---
+const previouslyEnabledIds = ref([]);
+const allProductIdsStore = ref([]); // Dùng khi chọn "All products"
 
-// --- STATE SẢN PHẨM ---
-const products = ref([]);
-const isLoadingPage = ref(true);
-const currentFilterParams = ref({ search: '', filters: {} });
-
-// --- STATE COLLECTIONS ---
-const collections = ref([]);
-const isLoadingCollections = ref(false);
-
-const templates = ref([
-  { id: 1, name: 'Upper body', isNew: false, image: 'https://cdn-icons-png.flaticon.com/512/863/863684.png' },
-  { id: 2, name: 'Full body', isNew: false, image: 'https://cdn-icons-png.flaticon.com/512/2806/2806085.png' },
-  { id: 3, name: 'Bottom body', isNew: false, image: 'https://cdn-icons-png.flaticon.com/512/3050/3050239.png' },
-  { id: 4, name: 'Eye wear', isNew: true, image: 'https://cdn-icons-png.flaticon.com/512/2618/2618361.png' },
-]);
-
-const isTemplateModalOpen = ref(false);
-const isImageModalOpen = ref(false);
-const selectedProduct = ref(null);
-
-// Lắng nghe sự kiện chuyển tab: Nếu mở tab Collection lần đầu thì mới tải data để tiết kiệm API
-watch(activeTab, (newTab) => {
-  if (newTab === 'collections' && collections.value.length === 0) {
-    fetchCollections();
-  }
-});
-
-// ==========================================================
-// LOGIC CHO TAB: PRODUCTS
-// ==========================================================
-const handleFilterChange = (params) => {
-  currentFilterParams.value = params;
-  fetchProducts(); 
-};
-
-const fetchProducts = async () => {
-  isLoadingPage.value = true;
+// ==========================================
+// 1. LẤY DỮ LIỆU ĐANG BẬT VTO HIỆN TẠI TỪ SHOPIFY
+// ==========================================
+const fetchCurrentState = async () => {
+  isLoadingData.value = true;
+  selectedItems.value = [];
+  previouslyEnabledIds.value = [];
+  
   try {
     await window.shopify.idToken();
-    let queryParts = [];
-    const { search, filters } = currentFilterParams.value;
-
-    if (search && search.trim() !== '') queryParts.push(`title:*${search.trim()}*`);
-    if (filters.Types && filters.Types.length > 0) queryParts.push(`(${filters.Types.map(t => `product_type:"${t}"`).join(' OR ')})`);
-    if (filters.Tags && filters.Tags.length > 0) queryParts.push(`(${filters.Tags.map(t => `tag:"${t}"`).join(' OR ')})`);
-    if (filters.Vendors && filters.Vendors.length > 0) queryParts.push(`(${filters.Vendors.map(v => `vendor:"${v}"`).join(' OR ')})`);
-    // Xử lý Collection chuẩn xác:
-    if (filters.Collections && filters.Collections.length > 0) {
-      const collectionQueries = filters.Collections.map(id => `collection_id:${id}`);
-      queryParts.push(`(${collectionQueries.join(' OR ')})`);
-    }
-
-    // Xử lý Category (Nếu bạn dùng Product Category chuẩn):
-    if (filters.Categories && filters.Categories.length > 0) {
-      const categoryQueries = filters.Categories.map(cat => `product_type:"${cat}"`); // Đổi trường tìm kiếm tùy theo cách bạn config
-      queryParts.push(`(${categoryQueries.join(' OR ')})`);
-    }
-
-    const finalQuery = queryParts.length > 0 ? queryParts.join(' AND ') : "";
-
+    
+    // Query lấy tối đa 250 sản phẩm (Nếu store lớn hơn em cần viết hàm loop Pagination)
     const graphqlQuery = {
       query: `
-        query getProducts($first: Int!, $searchQuery: String) {
-          products(first: $first, query: $searchQuery) {
+        query getProducts {
+          products(first: 250) {
             edges {
               node {
                 id title featuredImage { url }
                 vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
-                images(first: 10) { nodes { id } }
-              }
-            }
-          }
-        }
-      `,
-      variables: { first: 50, searchQuery: finalQuery } 
-    };
-
-    const response = await fetch('shopify:admin/api/2026-04/graphql.json', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery),
-    });
-
-    const result = await response.json();
-    if (result.errors) throw new Error(result.errors[0].message);
-
-    products.value = result.data.products.edges.map(({ node }) => {
-      const isEnabled = node.vtoStatus?.value === 'true';
-      return {
-        id: node.id, title: node.title, image: node.featuredImage?.url || 'https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png',
-        imagesCount: node.images?.nodes?.length || 0, vtoEnabled: isEnabled, status: isEnabled ? 'Auto' : 'VTO Off', isUpdating: false
-      };
-    });
-
-    
-  } catch (error) {
-    console.error("Lỗi fetch products:", error);
-    products.value = [];
-  } finally {
-    isLoadingPage.value = false;
-  }
-};
-
-const toggleVto = async (product) => {
-  if (product.isUpdating) return;
-  const previousState = product.vtoEnabled;
-  product.vtoEnabled = !product.vtoEnabled;
-  product.status = product.vtoEnabled ? 'Auto' : 'VTO Off';
-  product.isUpdating = true;
-
-  try {
-    await window.shopify.idToken();
-    const graphqlQuery = {
-      query: `mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { userErrors { field message } } }`,
-      variables: { metafields: [{ ownerId: product.id, namespace: "custom", key: "vto_enabled", type: "boolean", value: product.vtoEnabled.toString() }] }
-    };
-    const response = await fetch('shopify:admin/api/2026-04/graphql.json', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery) });
-    const result = await response.json();
-    if (result.data?.metafieldsSet?.userErrors?.length > 0) throw new Error(result.data.metafieldsSet.userErrors[0].message);
-    
-    // Đồng bộ lại dữ liệu nếu chuyển sang tab Collection
-    if(collections.value.length > 0) fetchCollections();
-  } catch (error) {
-    console.error("Lỗi update Metafield:", error);
-    product.vtoEnabled = previousState;
-    product.status = previousState ? 'Auto' : 'VTO Off';
-  } finally {
-    product.isUpdating = false;
-  }
-};
-
-// ==========================================================
-// LOGIC CHO TAB: COLLECTIONS
-// ==========================================================
-const fetchCollections = async () => {
-  isLoadingCollections.value = true;
-  try {
-    await window.shopify.idToken();
-    const graphqlQuery = {
-      query: `
-        query {
-          collections(first: 50) {
-            edges {
-              node {
-                id
-                title
-                image { url }
-                products(first: 250) {
-                  nodes {
-                    id
-                    vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+                variants(first: 20) {
+                  edges {
+                    node {
+                      id title image { url }
+                      vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+                    }
                   }
                 }
               }
@@ -286,105 +163,208 @@ const fetchCollections = async () => {
         }
       `
     };
-    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
+
+    const response = await fetch('shopify:admin/api/2026-04/graphql.json', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery),
     });
-    const result = await res.json();
-    
-    collections.value = result.data.collections.edges.map(({node}) => {
-      const productList = node.products.nodes;
-      const productIds = productList.map(p => p.id);
+    const result = await response.json();
+
+    const products = result.data.products.edges.map(e => e.node);
+    allProductIdsStore.value = products.map(p => p.id); // Lưu lại toàn bộ ID để dùng cho "All products"
+
+    // Map dữ liệu vào mảng selectedItems dựa theo mode hiện tại
+    if (launchMode.value === 'specific_products') {
+      const enabledProducts = products.filter(p => p.vtoStatus?.value === 'true');
+      previouslyEnabledIds.value = enabledProducts.map(p => p.id);
       
-      // LOGIC MỚI: Chỉ trả về true nếu TẤT CẢ sản phẩm đều có vtoStatus là 'true'
-      // Và danh sách sản phẩm phải có ít nhất 1 món (length > 0)
-      const isAllEnabled = productList.length > 0 && productList.every(p => p.vtoStatus?.value === 'true');
-
-      return {
-        id: node.id,
-        title: node.title,
-        image: node.image?.url || null,
-        productsCount: productList.length,
-        productIds: productIds,
-        vtoEnabled: isAllEnabled,
-        status: isAllEnabled ? 'Auto' : 'VTO Off', 
-        isUpdating: false
-      };
-    });
-  } catch (err) {
-    console.error("Lỗi fetch collections:", err);
-  } finally {
-    isLoadingCollections.value = false;
-  }
-};
-
-const toggleCollectionVto = async (collection) => {
-  if (collection.isUpdating) return;
-  const previousState = collection.vtoEnabled;
-  const previousStatus = collection.status; // <--- Lưu lại trạng thái cũ
-  collection.vtoEnabled = !collection.vtoEnabled;
-  collection.status = collection.vtoEnabled ? 'Auto' : 'VTO Off'; // <--- Cập nhật UI ngay lập tức
-  collection.isUpdating = true;
-
-  const newStateStr = collection.vtoEnabled.toString();
-
-  try {
-    await window.shopify.idToken();
-    
-    // THUẬT TOÁN BĂM NHỎ (BATCHING): Shopify chỉ cho phép update 25 metafields 1 lần
-    const chunkSize = 25;
-    const chunks = [];
-    for (let i = 0; i < collection.productIds.length; i += chunkSize) {
-      chunks.push(collection.productIds.slice(i, i + chunkSize));
-    }
-
-    // Gửi từng gói 25 sản phẩm lên Shopify
-    for (const chunk of chunks) {
-      const metafields = chunk.map(id => ({
-        ownerId: id,
-        namespace: "custom",
-        key: "vto_enabled",
-        type: "boolean",
-        value: newStateStr
+      selectedItems.value = enabledProducts.map(p => ({
+        id: p.id,
+        title: p.title,
+        image: p.featuredImage?.url
       }));
-
-      const graphqlQuery = {
-        query: `mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { userErrors { field message } } }`,
-        variables: { metafields }
-      };
-
-      const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery)
+    } 
+    else if (launchMode.value === 'specific_variants') {
+      let enabledVariants = [];
+      products.forEach(p => {
+        p.variants.edges.forEach(vEdge => {
+          const v = vEdge.node;
+          if (v.vtoStatus?.value === 'true') {
+            previouslyEnabledIds.value.push(v.id);
+            enabledVariants.push({
+              id: v.id,
+              title: `${p.title} - ${v.title}`,
+              image: v.image?.url || p.featuredImage?.url
+            });
+          }
+        });
       });
-      const result = await res.json();
-      if (result.data?.metafieldsSet?.userErrors?.length > 0) {
-        throw new Error(result.data.metafieldsSet.userErrors[0].message);
-      }
+      selectedItems.value = enabledVariants;
     }
-    
-    // Chạy ngầm việc update lại tab Products để data đồng bộ luôn
-    fetchProducts();
 
   } catch (error) {
-    console.error("Lỗi cập nhật hàng loạt:", error);
-    collection.vtoEnabled = previousState;
+    console.error("Lỗi fetch current state:", error);
   } finally {
-    collection.isUpdating = false;
+    isLoadingData.value = false;
   }
 };
 
-const openTemplateModal = (product) => { selectedProduct.value = product; isTemplateModalOpen.value = true; };
-const openImageModal = (product) => { selectedProduct.value = product; isImageModalOpen.value = true; };
+// Xử lý khi đổi radio button (Tải lại danh sách tương ứng)
+const handleModeChange = () => {
+  if (launchMode.value !== 'all') {
+    fetchCurrentState();
+  }
+};
 
-const getBadgeClass = (status) => {
-  switch (status) {
-    case 'Custom': return 'bg-green-100 text-green-700';
-    case 'Auto': return 'bg-blue-100 text-blue-700';
-    case 'VTO Off': return 'bg-red-100 text-red-700';
-    default: return 'bg-gray-100 text-gray-700';
+const resetSelection = () => {
+  fetchCurrentState();
+};
+
+const removeItem = (index) => {
+  selectedItems.value.splice(index, 1);
+};
+
+
+// ==========================================
+// 2. MỞ RESOURCE PICKER VÀ ĐỒNG BỘ CHECKBOX
+// ==========================================
+const triggerPicker = async () => {
+  const isVariantMode = launchMode.value === 'specific_variants';
+  
+  // 1. Chuẩn bị mảng ID để Shopify biết cần "Tick xanh" sẵn những ô nào
+  const preSelectedIds = selectedItems.value.map(item => ({ id: item.id }));
+
+  // Gọi API chính chủ của Shopify App Bridge
+  const selected = await window.shopify.resourcePicker({
+    type: "product", 
+    multiple: true,
+    action: "select", // Giữ nguyên "select" là chuẩn nhất
+    filter: { variants: isVariantMode },
+    selectionIds: preSelectedIds // <-- BÍ QUYẾT LÀ DÒNG NÀY NÈ BẠN TÔI
+  });
+
+  // Nếu user bấm dấu X tắt popup (không lưu)
+  if (!selected) return;
+
+  // 2. Xử lý danh sách trả về
+  let finalSelectionList = [];
+
+  if (isVariantMode) {
+    selected.forEach(product => {
+      product.variants.forEach(variant => {
+        finalSelectionList.push({
+          id: variant.id,
+          title: `${product.title} - ${variant.title}`,
+          image: variant.image?.originalSrc || product.images?.[0]?.originalSrc
+        });
+      });
+    });
+  } else {
+    selected.forEach(product => {
+      finalSelectionList.push({
+        id: product.id,
+        title: product.title,
+        image: product.images?.[0]?.originalSrc
+      });
+    });
+  }
+
+  // THAY ĐỔI QUAN TRỌNG: GHI ĐÈ TOÀN BỘ thay vì push thêm vào.
+  // Vì danh sách `selected` trả về đã phản ánh chính xác thao tác Tích thêm / Bỏ tích của User rồi.
+  selectedItems.value = finalSelectionList;
+};
+
+// ==========================================
+// 3. THUẬT TOÁN ĐỒNG BỘ VÀ CẬP NHẬT (APPLY)
+// ==========================================
+const applySettings = async () => {
+  isApplying.value = true;
+  
+  try {
+    let idsToTurnOn = [];
+    let idsToTurnOff = [];
+
+    if (launchMode.value === 'all') {
+      // Bật toàn bộ sản phẩm trong cửa hàng
+      idsToTurnOn = allProductIdsStore.value;
+      // Tắt toàn bộ variant (Để tránh conflict nếu trước đó họ dùng variant)
+      // *Thực tế em cần query lấy hết variant id để tắt, ở đây anh mô phỏng logic
+    } else {
+      // THUẬT TOÁN DIFFING: So sánh mảng cũ và mảng mới
+      const currentSelectedIds = selectedItems.value.map(i => i.id);
+      
+      // 1. Những ID có trong mảng Mới nhưng chưa có trong mảng Cũ -> CẦN BẬT (true)
+      idsToTurnOn = currentSelectedIds.filter(id => !previouslyEnabledIds.value.includes(id));
+      
+      // 2. Những ID có trong mảng Cũ nhưng không còn trong mảng Mới -> CẦN TẮT (false)
+      idsToTurnOff = previouslyEnabledIds.value.filter(id => !currentSelectedIds.includes(id));
+    }
+
+    // Gửi Batching Updates
+    if (idsToTurnOn.length > 0) await batchUpdateMetafields(idsToTurnOn, "true");
+    if (idsToTurnOff.length > 0) await batchUpdateMetafields(idsToTurnOff, "false");
+
+    window.shopify.toast.show('Applied VTO settings successfully!');
+    
+    // Cập nhật lại trạng thái gốc sau khi lưu thành công
+    await fetchCurrentState();
+
+  } catch (error) {
+    console.error("Lỗi Apply:", error);
+    window.shopify.toast.show('Failed to apply settings', { isError: true });
+  } finally {
+    isApplying.value = false;
+  }
+};
+
+// Hàm cập nhật Metafield chia gói 25
+const batchUpdateMetafields = async (ids, valueStr) => {
+  await window.shopify.idToken();
+  const chunkSize = 25;
+  
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const metafields = chunk.map(id => ({
+      ownerId: id,
+      namespace: "custom", // SỬA THÀNH NAMESPACE CỦA EM
+      key: "vto_enabled",  // SỬA THÀNH KEY CỦA EM
+      type: "boolean",
+      value: valueStr
+    }));
+
+    const graphqlQuery = {
+      query: `mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { userErrors { message } } }`,
+      variables: { metafields }
+    };
+
+    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery)
+    });
+    const result = await res.json();
+    if (result.data?.metafieldsSet?.userErrors?.length > 0) {
+      throw new Error(result.data.metafieldsSet.userErrors[0].message);
+    }
   }
 };
 
 onMounted(() => {
-  fetchProducts(); // Vừa vào trang thì load tab Products trước
+  // Khi mở trang, tải dữ liệu đang được bật sẵn
+  fetchCurrentState();
 });
 </script>
+
+<style>
+/* CSS cho thanh cuộn danh sách sản phẩm được đẹp hơn */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #d1d5db;
+}
+</style>

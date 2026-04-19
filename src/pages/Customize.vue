@@ -1,10 +1,10 @@
 <template lang="pug">
+ui-title-bar(title="Taitta VTON - Customize")
+
 div(class="max-w-6xl mx-auto pb-10")
   //- Tiêu đề trang
   div(class="mb-6")
-    h1(class="text-2xl font-bold text-gray-900") Customize Button
-    p(class="text-sm text-gray-500 mt-1") Design the Virtual Try-On button to match your brand.
-
+    
   div(v-if="isPageLoading" class="flex flex-col items-center justify-center py-32 bg-white rounded-xl shadow-sm border border-gray-200")
     svg(class="animate-spin h-10 w-10 text-gray-900 mb-4", xmlns="http://www.w3.org/2000/svg", fill="none", viewBox="0 0 24 24")
       circle(class="opacity-25", cx="12", cy="12", r="10", stroke="currentColor", stroke-width="4")
@@ -18,7 +18,7 @@ div(class="max-w-6xl mx-auto pb-10")
     //- CỘT TRÁI: KHU VỰC CÀI ĐẶT
     div(class="w-full lg:w-2/3 bg-white rounded-xl shadow-sm border border-gray-200")
       div(class="p-6 border-b border-gray-200")
-        h2(class="text-lg font-bold text-gray-800") Appearance
+        h2(class="!text-lg font-bold text-gray-800") Appearance
 
       div(class="p-6 flex flex-col gap-8")
         
