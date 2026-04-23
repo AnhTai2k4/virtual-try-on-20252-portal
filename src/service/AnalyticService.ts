@@ -1,9 +1,10 @@
-export const getOverviewAnalytics = async () => {
+export const getOverview = async () => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`http://localhost/api/portal/tryon/analytics/overview?period=30d`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/overview?range=7d`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       'Authorization': `Bearer ${token}`
 
     },
@@ -14,6 +15,25 @@ export const getOverviewAnalytics = async () => {
   }
 
   const data = await response.json();
-  return data.data;
+  return data;
 
+}
+
+export const getTopProducts = async () => {
+  const token = await window.shopify.idToken();
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?period=30d&limit=10`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`
+
+    },
+  }); 
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+
+  const data = await response.json();
+  return data.data;
 }

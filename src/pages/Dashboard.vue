@@ -3,7 +3,7 @@ ui-title-bar(title="Taitta VTON - Dashboard")
 Page
   Layout
     LayoutSection
-      Card
+      Card(class="mt-5")
         div(class="flex justify-start items-center gap-4 mb-4")
           img(src="https://cdn.shopify.com/s/files/applications/1b2264711de2bedd402f74cf579a87cf_200x200.png?v=1773998590", alt="Logo", class="rounded-full w-14 h-14 border border-gray-200 shadow-sm")
           h1(class="text-2xl font-bold") Welcome to Your Virtual Try-On Dashboard! 🎉

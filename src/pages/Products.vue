@@ -1,18 +1,36 @@
 <template lang="pug">
 ui-title-bar(title="Taitta VTON - Products")
 
-Page
-  
-  
+Page(title="Product Management")
     //- ==========================================
     //- GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH" (INLINE)
     //- ==========================================
-    Card(class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4")
-      
-      //- HEADER
-      div(class="px-6 py-4 border-b border-gray-200 flex justify-between items-center")
-        h1(class="!text-xl font-bold text-gray-900") Choose product to launch
-        
+    Card(class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ")      
+      div(class="px-6 py-5 border-b border-gray-200 ")
+        div(class="flex justify-between items-start")
+          
+          //- Khối bên trái: Icon + Title + Subtitle
+          div(class="flex gap-4")
+            //- Icon Box (Giỏ hàng) có đổ bóng nhẹ
+            //- div(class="hidden sm:flex items-center justify-center w-12 h-12 bg-white rounded-xl border border-gray-200 shadow-sm text-gray-700")
+            //-   svg(class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+            //-     path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z")
+            
+            div(class="text-sm")
+              div(class="flex items-center gap-2.5")
+                h1(class="!font-bold !text-base ") Choose product to launch
+                //- Badge nổi bật
+              
+              //- Subtitle giải thích chi tiết
+              p(class=" mt-1.5 text-gray-500 leading-relaxed max-w-xl") 
+                | Select where the Virtual Try-On button should appear on your storefront. You can apply it globally or restrict it to specific items to control quota.
+
+          //- Khối bên phải: Nút Help/Guide
+          button(class="hidden md:flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-800 transition-colors mt-1")
+            svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+              path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
+            | View guide
+       
       //- BODY (RADIO OPTIONS)
       div(class="p-6 space-y-5")
         
@@ -119,20 +137,21 @@ Page
 <script setup>
 import { ref, onMounted } from 'vue';
 
-// --- TRẠNG THÁI UI ---
+// ==========================================
+// A. KHAI BÁO BIẾN TRẠNG THÁI (STATE)
+// ==========================================
 const launchMode = ref('specific_products');
 const selectedItems = ref([]);
 const isLoadingData = ref(false);
 const isApplying = ref(false);
+const shopId = ref(null); 
 
-// --- LƯU TRỮ TRẠNG THÁI GỐC (Dùng để so sánh Tắt/Bật) ---
 const previouslyEnabledIds = ref([]);
-const allProductIdsStore = ref([]); // Dùng khi chọn "All products"
 
 // ==========================================
-// 1. LẤY DỮ LIỆU ĐANG BẬT VTO HIỆN TẠI TỪ SHOPIFY
+// B. HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
 // ==========================================
-const fetchCurrentState = async () => {
+const fetchCurrentState = async (isInitialLoad = false) => {
   isLoadingData.value = true;
   selectedItems.value = [];
   previouslyEnabledIds.value = [];
@@ -140,67 +159,85 @@ const fetchCurrentState = async () => {
   try {
     await window.shopify.idToken();
     
-    // Query lấy tối đa 250 sản phẩm (Nếu store lớn hơn em cần viết hàm loop Pagination)
-    const graphqlQuery = {
+    // 1. Lấy ID của Shop và Mode đang lưu
+    const shopQuery = {
       query: `
-        query getProducts {
-          products(first: 250) {
-            edges {
-              node {
-                id title featuredImage { url }
-                vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
-                variants(first: 20) {
-                  edges {
-                    node {
-                      id title image { url }
-                      vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+        query getShopData {
+          shop {
+            id
+            launchMode: metafield(namespace: "custom", key: "vto_launch_mode") { value }
+          }
+        }
+      `
+    };
+    
+    const shopRes = await fetch('shopify:admin/api/2026-04/graphql.json', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shopQuery),
+    });
+    const shopResult = await shopRes.json();
+    shopId.value = shopResult.data.shop.id;
+    
+    // CHỈ ghi đè lại Mode từ Database nếu là lần tải đầu tiên (F5) hoặc bấm Cancel
+    if (isInitialLoad && shopResult.data.shop.launchMode?.value) {
+      launchMode.value = shopResult.data.shop.launchMode.value;
+    }
+
+    // 2. Chỉ tải danh sách sản phẩm nếu KHÔNG chọn "All products"
+    if (launchMode.value !== 'all') {
+      const productQuery = {
+        query: `
+          query getProducts {
+            products(first: 250) {
+              edges {
+                node {
+                  id title featuredImage { url }
+                  vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+                  variants(first: 20) {
+                    edges {
+                      node {
+                        id title image { url }
+                        vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+                      }
                     }
                   }
                 }
               }
             }
           }
-        }
-      `
-    };
+        `
+      };
 
-    const response = await fetch('shopify:admin/api/2026-04/graphql.json', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graphqlQuery),
-    });
-    const result = await response.json();
-
-    const products = result.data.products.edges.map(e => e.node);
-    allProductIdsStore.value = products.map(p => p.id); // Lưu lại toàn bộ ID để dùng cho "All products"
-
-    // Map dữ liệu vào mảng selectedItems dựa theo mode hiện tại
-    if (launchMode.value === 'specific_products') {
-      const enabledProducts = products.filter(p => p.vtoStatus?.value === 'true');
-      previouslyEnabledIds.value = enabledProducts.map(p => p.id);
-      
-      selectedItems.value = enabledProducts.map(p => ({
-        id: p.id,
-        title: p.title,
-        image: p.featuredImage?.url
-      }));
-    } 
-    else if (launchMode.value === 'specific_variants') {
-      let enabledVariants = [];
-      products.forEach(p => {
-        p.variants.edges.forEach(vEdge => {
-          const v = vEdge.node;
-          if (v.vtoStatus?.value === 'true') {
-            previouslyEnabledIds.value.push(v.id);
-            enabledVariants.push({
-              id: v.id,
-              title: `${p.title} - ${v.title}`,
-              image: v.image?.url || p.featuredImage?.url
-            });
-          }
-        });
+      const productRes = await fetch('shopify:admin/api/2026-04/graphql.json', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productQuery),
       });
-      selectedItems.value = enabledVariants;
-    }
+      const productResult = await productRes.json();
+      const products = productResult.data.products.edges.map(e => e.node);
 
+      // Phân loại data đưa lên giao diện
+      if (launchMode.value === 'specific_products') {
+        const enabledProducts = products.filter(p => p.vtoStatus?.value === 'true');
+        previouslyEnabledIds.value = enabledProducts.map(p => p.id);
+        
+        selectedItems.value = enabledProducts.map(p => ({
+          id: p.id, title: p.title, image: p.featuredImage?.url
+        }));
+      } 
+      else if (launchMode.value === 'specific_variants') {
+        let enabledVariants = [];
+        products.forEach(p => {
+          p.variants.edges.forEach(vEdge => {
+            const v = vEdge.node;
+            if (v.vtoStatus?.value === 'true') {
+              previouslyEnabledIds.value.push(v.id);
+              enabledVariants.push({
+                id: v.id, title: `${p.title} - ${v.title}`, image: v.image?.url || p.featuredImage?.url
+              });
+            }
+          });
+        });
+        selectedItems.value = enabledVariants;
+      }
+    }
   } catch (error) {
     console.error("Lỗi fetch current state:", error);
   } finally {
@@ -208,105 +245,88 @@ const fetchCurrentState = async () => {
   }
 };
 
-// Xử lý khi đổi radio button (Tải lại danh sách tương ứng)
+// ==========================================
+// C. CÁC HÀM XỬ LÝ SỰ KIỆN GIAO DIỆN (UI ACTIONS)
+// ==========================================
 const handleModeChange = () => {
-  if (launchMode.value !== 'all') {
-    fetchCurrentState();
-  }
+  // Chuyển radio -> KHÔNG load lại mode từ DB (false) để tránh bị nhảy ngược
+  fetchCurrentState(false);
 };
 
 const resetSelection = () => {
-  fetchCurrentState();
+  // Bấm Cancel -> Xóa sạch thao tác, load lại từ DB (true)
+  fetchCurrentState(true); 
 };
 
-const removeItem = (index) => {
-  selectedItems.value.splice(index, 1);
-};
+const removeItem = (index) => selectedItems.value.splice(index, 1);
 
-
-// ==========================================
-// 2. MỞ RESOURCE PICKER VÀ ĐỒNG BỘ CHECKBOX
-// ==========================================
 const triggerPicker = async () => {
   const isVariantMode = launchMode.value === 'specific_variants';
-  
-  // 1. Chuẩn bị mảng ID để Shopify biết cần "Tick xanh" sẵn những ô nào
   const preSelectedIds = selectedItems.value.map(item => ({ id: item.id }));
 
-  // Gọi API chính chủ của Shopify App Bridge
   const selected = await window.shopify.resourcePicker({
     type: "product", 
     multiple: true,
-    action: "select", // Giữ nguyên "select" là chuẩn nhất
+    action: "select", 
     filter: { variants: isVariantMode },
-    selectionIds: preSelectedIds // <-- BÍ QUYẾT LÀ DÒNG NÀY NÈ BẠN TÔI
+    selectionIds: preSelectedIds
   });
 
-  // Nếu user bấm dấu X tắt popup (không lưu)
   if (!selected) return;
 
-  // 2. Xử lý danh sách trả về
   let finalSelectionList = [];
-
   if (isVariantMode) {
     selected.forEach(product => {
       product.variants.forEach(variant => {
         finalSelectionList.push({
-          id: variant.id,
-          title: `${product.title} - ${variant.title}`,
-          image: variant.image?.originalSrc || product.images?.[0]?.originalSrc
+          id: variant.id, title: `${product.title} - ${variant.title}`, image: variant.image?.originalSrc || product.images?.[0]?.originalSrc
         });
       });
     });
   } else {
     selected.forEach(product => {
       finalSelectionList.push({
-        id: product.id,
-        title: product.title,
-        image: product.images?.[0]?.originalSrc
+        id: product.id, title: product.title, image: product.images?.[0]?.originalSrc
       });
     });
   }
-
-  // THAY ĐỔI QUAN TRỌNG: GHI ĐÈ TOÀN BỘ thay vì push thêm vào.
-  // Vì danh sách `selected` trả về đã phản ánh chính xác thao tác Tích thêm / Bỏ tích của User rồi.
   selectedItems.value = finalSelectionList;
 };
 
 // ==========================================
-// 3. THUẬT TOÁN ĐỒNG BỘ VÀ CẬP NHẬT (APPLY)
+// D. THUẬT TOÁN ĐỒNG BỘ VÀ LƯU TRỮ (APPLY)
 // ==========================================
 const applySettings = async () => {
   isApplying.value = true;
   
   try {
-    let idsToTurnOn = [];
-    let idsToTurnOff = [];
+    const isAllMode = launchMode.value === 'all';
+    
+    // 1. Luôn lưu trạng thái Mode và Enable_All cho toàn Shop
+    await batchUpdateMetafields([shopId.value], [
+      { namespace: "custom", key: "vto_launch_mode", value: launchMode.value },
+      { namespace: "custom", key: "vto_enable_all", value: isAllMode ? "true" : "false" }
+    ]);
 
-    if (launchMode.value === 'all') {
-      // Bật toàn bộ sản phẩm trong cửa hàng
-      idsToTurnOn = allProductIdsStore.value;
-      // Tắt toàn bộ variant (Để tránh conflict nếu trước đó họ dùng variant)
-      // *Thực tế em cần query lấy hết variant id để tắt, ở đây anh mô phỏng logic
-    } else {
-      // THUẬT TOÁN DIFFING: So sánh mảng cũ và mảng mới
+    // 2. Chỉ cập nhật từng Sản phẩm/Biến thể nếu Mode KHÔNG phải là "All"
+    if (!isAllMode) {
       const currentSelectedIds = selectedItems.value.map(i => i.id);
       
-      // 1. Những ID có trong mảng Mới nhưng chưa có trong mảng Cũ -> CẦN BẬT (true)
-      idsToTurnOn = currentSelectedIds.filter(id => !previouslyEnabledIds.value.includes(id));
-      
-      // 2. Những ID có trong mảng Cũ nhưng không còn trong mảng Mới -> CẦN TẮT (false)
-      idsToTurnOff = previouslyEnabledIds.value.filter(id => !currentSelectedIds.includes(id));
-    }
+      const idsToTurnOn = currentSelectedIds.filter(id => !previouslyEnabledIds.value.includes(id));
+      const idsToTurnOff = previouslyEnabledIds.value.filter(id => !currentSelectedIds.includes(id));
 
-    // Gửi Batching Updates
-    if (idsToTurnOn.length > 0) await batchUpdateMetafields(idsToTurnOn, "true");
-    if (idsToTurnOff.length > 0) await batchUpdateMetafields(idsToTurnOff, "false");
+      if (idsToTurnOn.length > 0) {
+        await batchUpdateMetafields(idsToTurnOn, [{ namespace: "custom", key: "vto_enabled", value: "true" }]);
+      }
+      if (idsToTurnOff.length > 0) {
+        await batchUpdateMetafields(idsToTurnOff, [{ namespace: "custom", key: "vto_enabled", value: "false" }]);
+      }
+    }
 
     window.shopify.toast.show('Applied VTO settings successfully!');
     
-    // Cập nhật lại trạng thái gốc sau khi lưu thành công
-    await fetchCurrentState();
+    // Lưu xong thì tải lại trang thái từ DB như mới
+    await fetchCurrentState(true);
 
   } catch (error) {
     console.error("Lỗi Apply:", error);
@@ -316,20 +336,23 @@ const applySettings = async () => {
   }
 };
 
-// Hàm cập nhật Metafield chia gói 25
-const batchUpdateMetafields = async (ids, valueStr) => {
+const batchUpdateMetafields = async (ownerIds, metafieldDefs) => {
   await window.shopify.idToken();
-  const chunkSize = 25;
+  const chunkSize = 25; // Giới hạn của Shopify là 25 metafields mỗi lần gọi
   
-  for (let i = 0; i < ids.length; i += chunkSize) {
-    const chunk = ids.slice(i, i + chunkSize);
-    const metafields = chunk.map(id => ({
-      ownerId: id,
-      namespace: "custom", // SỬA THÀNH NAMESPACE CỦA EM
-      key: "vto_enabled",  // SỬA THÀNH KEY CỦA EM
-      type: "boolean",
-      value: valueStr
-    }));
+  for (let i = 0; i < ownerIds.length; i += chunkSize) {
+    const chunk = ownerIds.slice(i, i + chunkSize);
+    
+    const metafields = chunk.flatMap(id => 
+      metafieldDefs.map(def => ({
+        ownerId: id,
+        namespace: def.namespace,
+        key: def.key,
+        // Nếu lưu Mode (chữ) thì dùng text, lưu Bật/Tắt thì dùng boolean
+        type: def.key === "vto_launch_mode" ? "single_line_text_field" : "boolean",
+        value: def.value
+      }))
+    );
 
     const graphqlQuery = {
       query: `mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { userErrors { message } } }`,
@@ -346,9 +369,12 @@ const batchUpdateMetafields = async (ids, valueStr) => {
   }
 };
 
+// ==========================================
+// E. LIFECYCLE (CHẠY KHI MỞ TRANG)
+// ==========================================
 onMounted(() => {
-  // Khi mở trang, tải dữ liệu đang được bật sẵn
-  fetchCurrentState();
+  // Lần đầu mở trang -> Ưu tiên lấy data từ DB (true)
+  fetchCurrentState(true);
 });
 </script>
 
