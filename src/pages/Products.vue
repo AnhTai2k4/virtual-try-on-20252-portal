@@ -2,27 +2,31 @@
 ui-title-bar(title="Taitta VTON - Products")
 
 Page(title="Product Management")
-    //- ==========================================
-    //- GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH" (INLINE)
-    //- ==========================================
-    Card(class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ")      
-      div(class="px-6 py-5 border-b border-gray-200 ")
+  //- ==========================================
+  //- GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH"
+  //- ==========================================
+  Card(class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative")      
+    
+    //- MÀN HÌNH LOADING CHỜ LẤY MODE BAN ĐẦU (Chặn hiện tượng nháy giật F5)
+    div(v-if="isInitializing" class="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3")
+      svg(class="animate-spin h-6 w-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
+        circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
+        path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
+      span(class="text-sm font-medium text-gray-500") Loading configuration...
+
+    //- NỘI DUNG CARD CHÍNH (Sẽ bị làm mờ khi đang Initializing)
+    div(:class="{ 'opacity-30 pointer-events-none': isInitializing }")
+      div(class="px-6 py-5 border-b border-gray-200")
         div(class="flex justify-between items-start")
           
-          //- Khối bên trái: Icon + Title + Subtitle
+          //- Khối bên trái: Title + Subtitle
           div(class="flex gap-4")
-            //- Icon Box (Giỏ hàng) có đổ bóng nhẹ
-            //- div(class="hidden sm:flex items-center justify-center w-12 h-12 bg-white rounded-xl border border-gray-200 shadow-sm text-gray-700")
-            //-   svg(class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-            //-     path(stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z")
-            
             div(class="text-sm")
               div(class="flex items-center gap-2.5")
-                h1(class="!font-bold !text-base ") Choose product to launch
-                //- Badge nổi bật
+                h1(class="!font-bold !text-base") Choose product to launch
               
               //- Subtitle giải thích chi tiết
-              p(class=" mt-1.5 text-gray-500 leading-relaxed max-w-xl") 
+              p(class="mt-1.5 text-gray-500 leading-relaxed max-w-xl") 
                 | Select where the Virtual Try-On button should appear on your storefront. You can apply it globally or restrict it to specific items to control quota.
 
           //- Khối bên phải: Nút Help/Guide
@@ -30,7 +34,7 @@ Page(title="Product Management")
             svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
               path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
             | View guide
-       
+        
       //- BODY (RADIO OPTIONS)
       div(class="p-6 space-y-5")
         
@@ -82,9 +86,16 @@ Page(title="Product Management")
         div(v-if="launchMode !== 'all'" class="pt-6 border-t border-gray-200 mt-6")
           
           button(
+            v-if="launchMode == 'specific_products'"
             @click="triggerPicker"
             class="px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
           ) Choose products
+
+          button(
+            v-if="launchMode == 'specific_variants'"
+            @click="triggerPicker"
+            class="px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+          ) Choose variant
           
           div(class="mt-4 text-sm text-gray-800 font-medium mb-3") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
 
@@ -114,6 +125,7 @@ Page(title="Product Management")
               )
                 svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
                   path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16")
+                  
       //- FOOTER ACTIONS
       div(class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50")
         button(
@@ -140,19 +152,21 @@ import { ref, onMounted } from 'vue';
 // ==========================================
 // A. KHAI BÁO BIẾN TRẠNG THÁI (STATE)
 // ==========================================
-const launchMode = ref('specific_products');
+const isInitializing = ref(true); 
+const launchMode = ref('');
 const selectedItems = ref([]);
 const isLoadingData = ref(false);
 const isApplying = ref(false);
 const shopId = ref(null); 
-
 const previouslyEnabledIds = ref([]);
 
 // ==========================================
 // B. HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
 // ==========================================
 const fetchCurrentState = async (isInitialLoad = false) => {
-  isLoadingData.value = true;
+  if (isInitialLoad) isInitializing.value = true;
+  else isLoadingData.value = true;
+  
   selectedItems.value = [];
   previouslyEnabledIds.value = [];
   
@@ -177,9 +191,9 @@ const fetchCurrentState = async (isInitialLoad = false) => {
     const shopResult = await shopRes.json();
     shopId.value = shopResult.data.shop.id;
     
-    // CHỈ ghi đè lại Mode từ Database nếu là lần tải đầu tiên (F5) hoặc bấm Cancel
-    if (isInitialLoad && shopResult.data.shop.launchMode?.value) {
-      launchMode.value = shopResult.data.shop.launchMode.value;
+    // Ghi đè lại Mode từ Database nếu là lần tải đầu tiên (F5) hoặc bấm Cancel
+    if (isInitialLoad) {
+      launchMode.value = shopResult.data.shop.launchMode?.value || 'specific_products';
     }
 
     // 2. Chỉ tải danh sách sản phẩm nếu KHÔNG chọn "All products"
@@ -197,6 +211,7 @@ const fetchCurrentState = async (isInitialLoad = false) => {
                       node {
                         id title image { url }
                         vtoStatus: metafield(namespace: "custom", key: "vto_enabled") { value }
+                        product { id } 
                       }
                     }
                   }
@@ -230,7 +245,10 @@ const fetchCurrentState = async (isInitialLoad = false) => {
             if (v.vtoStatus?.value === 'true') {
               previouslyEnabledIds.value.push(v.id);
               enabledVariants.push({
-                id: v.id, title: `${p.title} - ${v.title}`, image: v.image?.url || p.featuredImage?.url
+                id: v.id, 
+                title: `${p.title} - ${v.title}`, 
+                image: v.image?.url || p.featuredImage?.url,
+                productId: v.product.id // Lưu trữ ProductID để gửi cho Resource Picker
               });
             }
           });
@@ -241,28 +259,40 @@ const fetchCurrentState = async (isInitialLoad = false) => {
   } catch (error) {
     console.error("Lỗi fetch current state:", error);
   } finally {
-    isLoadingData.value = false;
+    if (isInitialLoad) isInitializing.value = false;
+    else isLoadingData.value = false;
   }
 };
 
 // ==========================================
 // C. CÁC HÀM XỬ LÝ SỰ KIỆN GIAO DIỆN (UI ACTIONS)
 // ==========================================
-const handleModeChange = () => {
-  // Chuyển radio -> KHÔNG load lại mode từ DB (false) để tránh bị nhảy ngược
-  fetchCurrentState(false);
-};
-
-const resetSelection = () => {
-  // Bấm Cancel -> Xóa sạch thao tác, load lại từ DB (true)
-  fetchCurrentState(true); 
-};
-
+const handleModeChange = () => fetchCurrentState(false);
+const resetSelection = () => fetchCurrentState(true);
 const removeItem = (index) => selectedItems.value.splice(index, 1);
 
 const triggerPicker = async () => {
   const isVariantMode = launchMode.value === 'specific_variants';
-  const preSelectedIds = selectedItems.value.map(item => ({ id: item.id }));
+  
+  // Tái cấu trúc mảng cho đúng chuẩn Shopify Resource Picker
+  let preSelectedIds = [];
+  
+  if (isVariantMode) {
+    // Nhóm các Variant theo Product ID
+    const grouped = selectedItems.value.reduce((acc, item) => {
+      if (!acc[item.productId]) acc[item.productId] = [];
+      acc[item.productId].push({ id: item.id });
+      return acc;
+    }, {});
+
+    preSelectedIds = Object.keys(grouped).map(pId => ({
+      id: pId,
+      variants: grouped[pId]
+    }));
+  } else {
+    // Mode Product thì gửi id bình thường
+    preSelectedIds = selectedItems.value.map(item => ({ id: item.id }));
+  }
 
   const selected = await window.shopify.resourcePicker({
     type: "product", 
@@ -279,7 +309,10 @@ const triggerPicker = async () => {
     selected.forEach(product => {
       product.variants.forEach(variant => {
         finalSelectionList.push({
-          id: variant.id, title: `${product.title} - ${variant.title}`, image: variant.image?.originalSrc || product.images?.[0]?.originalSrc
+          id: variant.id, 
+          title: `${product.title} - ${variant.title}`, 
+          image: variant.image?.originalSrc || product.images?.[0]?.originalSrc,
+          productId: product.id // Giữ lại ID sản phẩm cha cho lần chọn kế tiếp
         });
       });
     });
@@ -348,7 +381,6 @@ const batchUpdateMetafields = async (ownerIds, metafieldDefs) => {
         ownerId: id,
         namespace: def.namespace,
         key: def.key,
-        // Nếu lưu Mode (chữ) thì dùng text, lưu Bật/Tắt thì dùng boolean
         type: def.key === "vto_launch_mode" ? "single_line_text_field" : "boolean",
         value: def.value
       }))
@@ -373,7 +405,6 @@ const batchUpdateMetafields = async (ownerIds, metafieldDefs) => {
 // E. LIFECYCLE (CHẠY KHI MỞ TRANG)
 // ==========================================
 onMounted(() => {
-  // Lần đầu mở trang -> Ưu tiên lấy data từ DB (true)
   fetchCurrentState(true);
 });
 </script>

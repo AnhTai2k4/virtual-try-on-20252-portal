@@ -21,7 +21,7 @@ export const getOverview = async () => {
 
 export const getTopProducts = async () => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?period=30d&limit=10`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?period=7d&limit=10`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
