@@ -11,21 +11,25 @@ Page(title="Analytics")
         
         //- Revenue (Cột 1: Không có viền trái, đệm sang phải)
         .flex.flex-col.gap-2.pr-6
-          Text(variant="headingSm" as="h3" fontWeight="medium") Revenue (Post-Try-On)
-          Banner(tone="info")
-            p No orders from try-on users yet.
+          Text(variant="headingSm" as="h3" fontWeight="medium") Order Conversion Rate 
+          .py-2(v-if="orderConversionRate > 0")
+            Text(variant="headingxl" as="p") {{ Math.floor(orderConversionRate) }} %
+          Banner(v-else tone="info")
+            p No order conversion data available yet.
             
         //- Conversion Rate (Cột 2: Có viền dọc màu xanh + đệm 2 bên)
         .flex.flex-col.gap-2.px-6.border-l.border-blue-200
-          Text(variant="headingSm" as="h3" fontWeight="medium") Conversion Rate (Post-Try-On)
-          Banner(tone="info")
-            p No orders from try-on users yet.
+          Text(variant="headingSm" as="h3" fontWeight="medium") Cart Conversion Rate 
+          .py-2(v-if="cartConversionRate > 0")
+            Text(variant="headingxl" as="p") {{ Math.floor(cartConversionRate) }} %
+          Banner(v-else tone="info")
+            p No cart conversion data available yet.
             
         //- Button Click (Cột 3: Có viền dọc màu xanh + đệm 2 bên)
         .flex.flex-col.gap-2.px-6.border-l.border-blue-200
           Text(variant="headingSm" as="h3" fontWeight="medium") Button Click
           
-          .py-2(v-if="totalRequests >= 0")
+          .py-2(v-if="totalRequests > 0")
             Text(variant="headingxl" as="p") {{ totalRequests }}
           Banner(v-else tone="info")
             p No click data available yet.
@@ -34,7 +38,7 @@ Page(title="Analytics")
         .flex.flex-col.gap-2.pl-6.border-l.border-blue-200
           Text(variant="headingSm" as="h3" fontWeight="medium") Total Generations
           .py-2
-            Text(v-if="totalGenerations >= 0" variant="heading3xl" as="p") {{ totalGenerations }}
+            Text(v-if="totalGenerations > 0" variant="heading3xl" as="p") {{ totalGenerations }}
             Text(v-else variant="heading3xl" as="p") 0
 
       //- =====================================
@@ -127,6 +131,8 @@ const formatDate = (dateStr) => {
 
 const totalRequests = ref(0);
 const totalGenerations = ref(0);
+const cartConversionRate = ref(0);
+const orderConversionRate = ref(0);
 
 // Dữ liệu mẫu cho bảng
 const tableRows = ref([]);
@@ -138,7 +144,8 @@ const fetchAnalytics = async () => {
     console.log("Overview Data:", res);
     totalRequests.value = res.totals.button_click;
     totalGenerations.value = res.totals.success;
-
+    cartConversionRate.value = res.totals.cart_conversion_rate;
+    orderConversionRate.value = res.totals.order_conversion_rate;
     const topProductsRes = await getTopProducts();
 
     tableRows.value= topProductsRes.map(item => {
