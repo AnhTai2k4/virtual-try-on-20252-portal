@@ -30,7 +30,7 @@ Page(title="Settings")
   //- CARD 2: GENERATION LIMITS
   //- ==========================================
   Card(class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden")
-    div(class="p-6")
+    div
       h2(class="text-base font-semibold text-gray-900 mb-5") Generation Limits
       
       div(class="space-y-6")
@@ -65,7 +65,7 @@ Page(title="Settings")
   //- CARD 3: DATA RETENTION
   //- ==========================================
   Card(class="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden")
-    div(class="p-6")
+    div
       h2(class="text-base font-semibold text-gray-900 mb-5") Data Retention
       
       div(class="space-y-1.5")
