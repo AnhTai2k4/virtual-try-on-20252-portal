@@ -100,7 +100,7 @@ Page(title="Settings")
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { getSetting, setSetting } from '../service/SettingService'; 
+import { getSetting, setSetting, fetchShopifyMetafield, updateShopifyMetafield } from '../service/SettingService'; 
 
 // ==========================================
 // STATE
@@ -131,108 +131,52 @@ const retentionOptions = [
 ];
 
 // ==========================================
-// API SHOPIFY METAFIELDS (NỘI BỘ FE)
-// ==========================================
-const fetchShopifyMetafield = async () => {
-  await (window as any).shopify.idToken();
-  const query = `
-    query {
-      shop {
-        id
-        metafield(namespace: "custom_vto", key: "require_login") {
-          value
-        }
-      }
-    }
-  `;
-
-  const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query })
-  });
-
-  const result = await res.json();
-  if (result.data?.shop) {
-    shopId.value = result.data.shop.id;
-    const mfValue = result.data.shop.metafield?.value;
-    if (mfValue !== undefined) {
-      settings.requireLogin = mfValue === "true";
-    }
-  }
-};
-
-const updateShopifyMetafield = async () => {
-  if (!shopId.value) throw new Error("Shop ID missing");
-
-  const query = `
-    mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
-      metafieldsSet(metafields: $metafields) {
-        userErrors { message }
-      }
-    }
-  `;
-  
-  const variables = {
-    metafields: [
-      {
-        ownerId: shopId.value,
-        namespace: "custom_vto",
-        key: "require_login",
-        type: "boolean",
-        value: settings.requireLogin ? "true" : "false" 
-      }
-    ]
-  };
-
-  const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables })
-  });
-
-  const result = await res.json();
-  if (result.data?.metafieldsSet?.userErrors?.length > 0) {
-    throw new Error(result.data.metafieldsSet.userErrors[0].message);
-  }
-};
-
-// ==========================================
 // HÀM ĐIỀU PHỐI (ACTIONS)
 // ==========================================
 const loadAllSettings = async () => {
-  isLoading.value = true; // Bật cờ loading
+  isLoading.value = true; 
   try {
-    const [beSettings] = await Promise.all([
+    // Chạy song song 2 request lấy dữ liệu
+    const [beSettings, shopifyData] = await Promise.all([
       getSetting(),
-      fetchShopifyMetafield()
+      fetchShopifyMetafield() // Hàm import từ service
     ]);
 
+    // 1. Gán dữ liệu Backend
     if (beSettings) {
       settings.dailyLimit = beSettings.daily_try_on_limit || 5;
       settings.retentionHours = beSettings.result_retention_hours || 72;
+    }
+
+    // 2. Gán dữ liệu Metafield
+    if (shopifyData.shopId) {
+      shopId.value = shopifyData.shopId;
+      settings.requireLogin = shopifyData.requireLogin;
     }
   } catch (error) {
     console.error("Lỗi khi load Settings:", error);
     (window as any).shopify?.toast?.show('Failed to load settings', { isError: true });
   } finally {
-    isLoading.value = false; // Tắt cờ loading, hiển thị UI
+    isLoading.value = false; 
   }
 };
 
 const saveAllSettings = async () => {
   isSaving.value = true;
   try {
-    // Tạm thời chỉ gửi 2 trường này lên BE như bạn yêu cầu, 
-    // trường limitPeriod nằm ngoài chờ BE update sau.
+    if (!shopId.value) {
+      throw new Error("Không tìm thấy Shop ID, vui lòng tải lại trang.");
+    }
+
     const backendPayload = {
       daily_try_on_limit: settings.dailyLimit,
       result_retention_hours: settings.retentionHours
     };
 
+    // Chạy song song 2 request lưu dữ liệu
     await Promise.all([
       setSetting(backendPayload),
-      updateShopifyMetafield()
+      updateShopifyMetafield(shopId.value, settings.requireLogin) // Truyền tham số cho service
     ]);
 
     (window as any).shopify?.toast?.show('Settings saved successfully!');
@@ -244,9 +188,6 @@ const saveAllSettings = async () => {
   }
 };
 
-// ==========================================
-// LIFECYCLE
-// ==========================================
 onMounted(() => {
   loadAllSettings();
 });
