@@ -1,26 +1,21 @@
 <template lang="pug">
 ui-title-bar(title="Taitta VTON - Customize")
 
-Page(title="Customize Appearance")
-  
-  //- ==========================================
+Page(title="Customize Appearance" :fullWidth="true")
+
   //- LOADING STATE
-  //- ==========================================
   Card(v-if="isPageLoading")
     div(class="py-20 flex flex-col items-center justify-center")
       Spinner(size="large")
       Text(variant="bodyMd" tone="subdued" class="mt-4") Đang tải cấu hình...
 
-  //- ==========================================
+ 
   //- GIAO DIỆN CHÍNH
-  //- ==========================================
   Layout(v-else)
-    
     //- CỘT TRÁI: KHU VỰC CÀI ĐẶT
     LayoutSection
       Card
         BlockStack(gap="400")
-          
           //- Tiêu đề Card
           Text(variant="headingMd" as="h2") Appearance
           
@@ -148,10 +143,13 @@ import {
   Text, TextField, Checkbox, Button, Divider, Spinner 
 } from '@ownego/polaris-vue';
 
+// 💡 IMPORT TỪ FILE SERVICE VỪA TẠO
+import { getCustomizationSettings, updateCustomizationSettings } from '@/service/CustomizeService'; 
+
 // --- STATE CƠ BẢN ---
 const isSaving = ref(false);
-const isPageLoading = ref(true); // Trạng thái lúc mới vào trang đang lấy dữ liệu
-const shopId = ref(null); // Lưu ID của Shop để dùng cho lúc Save
+const isPageLoading = ref(true); 
+const shopId = ref(null); 
 
 // Dữ liệu cài đặt mặc định
 const settings = reactive({
@@ -159,9 +157,9 @@ const settings = reactive({
   textColor: '#FFFFFF',
   enableGlow: true,
   buttonText: 'Virtual Try-On',
-  titleText: 'See how you look good in this outfit', // Khai báo Title
-  paddingTop: 16, // Khai báo Padding Top
-  paddingBottom: 16 // Khai báo Padding Bottom
+  titleText: 'See how you look good in this outfit',
+  paddingTop: 16,
+  paddingBottom: 16
 });
 
 // Hàm Reset về mặc định
@@ -176,64 +174,35 @@ const resetToDefaults = () => {
 };
 
 // ==========================================================
-// 1. HÀM TẢI CÀI ĐẶT TỪ SHOPIFY (CHẠY LÚC VÀO TRANG)
+// 1. HÀM TẢI CÀI ĐẶT
 // ==========================================================
 const loadSettings = async () => {
   isPageLoading.value = true;
   try {
-    const AccessToken= await window.shopify.idToken();
-    console.log("Shopify Access Token:", AccessToken); // In ra token để kiểm tra
+    // Chỉ cần gọi 1 dòng từ Service
+    const data = await getCustomizationSettings();
     
-    // Câu lệnh lấy ID của Shop VÀ lấy luôn cái Metafield chứa cấu hình
-    const graphqlQuery = {
-      query: `
-        query {
-          shop {
-            id
-            metafield(namespace: "custom_vto", key: "button_settings") {
-              value
-            }
-          }
-        }
-      `
-    };
-
-    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(graphqlQuery),
-    });
-
-    const result = await res.json();
+    if (data.shopId) shopId.value = data.shopId;
     
-    if (result.data?.shop) {
-      // Lưu lại Shop ID để lát nữa dùng cho hàm Save
-      shopId.value = result.data.shop.id;
-
-      // Nếu Shop đã từng lưu cài đặt trước đó, ta sẽ bóc tách JSON ra
-      const savedMetafield = result.data.shop.metafield;
-      if (savedMetafield && savedMetafield.value) {
-        const parsedSettings = JSON.parse(savedMetafield.value);
-        
-        // Gán dữ liệu cũ vào biến giao diện
-        settings.bgColor = parsedSettings.bgColor || '#111111';
-        settings.textColor = parsedSettings.textColor || '#FFD700';
-        settings.enableGlow = parsedSettings.enableGlow ?? true;
-        settings.buttonText = parsedSettings.buttonText || 'Virtual Try-On';
-        settings.titleText = parsedSettings.titleText || 'See how you look good in this outfit';
-        settings.paddingTop = parsedSettings.paddingTop !== undefined ? parsedSettings.paddingTop : 16;
-        settings.paddingBottom = parsedSettings.paddingBottom !== undefined ? parsedSettings.paddingBottom : 16;
-      }
+    // Nếu có cài đặt cũ, gán đè lên state của Vue
+    if (data.settings) {
+      settings.bgColor = data.settings.bgColor || '#111111';
+      settings.textColor = data.settings.textColor || '#FFFFFF'; 
+      settings.enableGlow = data.settings.enableGlow ?? true;
+      settings.buttonText = data.settings.buttonText || 'Virtual Try-On';
+      settings.titleText = data.settings.titleText || 'See how you look good in this outfit';
+      settings.paddingTop = data.settings.paddingTop !== undefined ? data.settings.paddingTop : 16;
+      settings.paddingBottom = data.settings.paddingBottom !== undefined ? data.settings.paddingBottom : 16;
     }
   } catch (error) {
-    console.error("Lỗi khi tải cài đặt:", error);
+    console.error("Lỗi khi tải giao diện:", error);
   } finally {
     isPageLoading.value = false;
   }
 };
 
 // ==========================================================
-// 2. HÀM LƯU CÀI ĐẶT LÊN SHOPIFY (KHI BẤM NÚT SAVE)
+// 2. HÀM LƯU CÀI ĐẶT 
 // ==========================================================
 const saveSettings = async () => {
   if (!shopId.value) {
@@ -244,61 +213,16 @@ const saveSettings = async () => {
   isSaving.value = true;
   
   try {
-    await window.shopify.idToken();
-
-    // Dùng mutation metafieldsSet để ghi đè dữ liệu vào Shop
-    const graphqlQuery = {
-      query: `
-        mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
-          metafieldsSet(metafields: $metafields) {
-            metafields {
-              id
-              value
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        metafields: [
-          {
-            ownerId: shopId.value, // Dán nhãn lên Shop
-            namespace: "custom_vto",
-            key: "button_settings",
-            type: "json", // Kiểu dữ liệu là JSON
-            value: JSON.stringify(settings) // Đóng gói object settings thành chuỗi JSON
-          }
-        ]
-      }
-    };
-
-    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(graphqlQuery),
-    });
-
-    const result = await res.json();
-
-    if (result.data?.metafieldsSet?.userErrors?.length > 0) {
-      throw new Error(result.data.metafieldsSet.userErrors[0].message);
-    }
-
-    // Hiển thị thông báo thành công bằng component Toast của App Bridge
+    // Đẩy thẳng state xuống cho Service lo liệu
+    await updateCustomizationSettings(shopId.value, settings);
     window.shopify.toast.show('Settings saved successfully!');
-
   } catch (error) {
-    console.error("Lỗi khi lưu cài đặt:", error);
     window.shopify.toast.show('Failed to save settings. Please try again.', { isError: true });
   } finally {
     isSaving.value = false;
   }
 };
 
-// Gọi hàm loadSettings ngay khi trang vừa được tạo ra
 onMounted(() => {
   loadSettings();
 });
@@ -322,15 +246,4 @@ onMounted(() => {
   }
 }
 
-/* Ẩn mũi tên lên xuống của input number trên một số trình duyệt nếu bạn muốn nhìn cho gọn */
-/*
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
-}
-input[type=number] {
-  -moz-appearance: textfield;
-}
-*/
 </style>

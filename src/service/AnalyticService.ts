@@ -1,6 +1,6 @@
-export const getOverview = async () => {
+export const getOverview = async (period: string) => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/overview?range=7d`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/overview?range=${period}d`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -19,9 +19,9 @@ export const getOverview = async () => {
 
 }
 
-export const getTopProducts = async () => {
+export const getTopProducts = async (period: string) => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?period=7d&limit=10`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?period=${period}d&limit=10`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

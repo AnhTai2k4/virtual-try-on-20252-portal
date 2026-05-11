@@ -10,9 +10,8 @@ Page(title="Product Management")
       div(class="flex justify-between")
         Text(variant="bodyMd", as="p" class="text-gray-600") Enable collections to activate try-on for all products, or select individual products for custom settings.
 
-  //- ==========================================
   //- MAIN CARD: GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH"
-  //- ==========================================
+
   Card(class="mb-12 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative")      
     
     //- MÀN HÌNH LOADING CHỜ LẤY MODE BAN ĐẦU
@@ -183,9 +182,7 @@ interface SelectedItem {
   productId?: string;
 }
 
-// ==========================================
-// A. KHAI BÁO BIẾN TRẠNG THÁI (STATE)
-// ==========================================
+
 const isInitializing = ref<boolean>(true); 
 const launchMode = ref<string>('');
 const selectedItems = ref<SelectedItem[]>([]);
@@ -194,10 +191,7 @@ const isApplying = ref<boolean>(false);
 const shopId = ref<string | null>(null); 
 const previouslyEnabledIds = ref<string[]>([]);
 
-// ==========================================
-// B. HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
-// ==========================================
-
+// HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
 const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> => {
   if (isInitialLoad) isInitializing.value = true;
   else isLoadingData.value = true;
@@ -252,9 +246,7 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
   }
 };
 
-// ==========================================
-// C. CÁC HÀM XỬ LÝ SỰ KIỆN GIAO DIỆN (UI ACTIONS)
-// ==========================================
+// CÁC HÀM XỬ LÝ SỰ KIỆN GIAO DIỆN (UI ACTIONS)
 
 const handleModeChange = (): Promise<void> => fetchCurrentState(false);
 const resetSelection = (): Promise<void> => fetchCurrentState(true);
@@ -310,10 +302,7 @@ const triggerPicker = async (): Promise<void> => {
   selectedItems.value = finalSelectionList;
 };
 
-// ==========================================
-// D. THUẬT TOÁN ĐỒNG BỘ VÀ LƯU TRỮ (APPLY)
-// ==========================================
-
+// THUẬT TOÁN ĐỒNG BỘ VÀ LƯU TRỮ (APPLY)
 const applySettings = async (): Promise<void> => {
   isApplying.value = true;
   
@@ -351,9 +340,7 @@ const applySettings = async (): Promise<void> => {
   }
 };
 
-// ==========================================
-// E. LIFECYCLE (CHẠY KHI MỞ TRANG)
-// ==========================================
+
 onMounted(() => {
   fetchCurrentState(true);
 });
