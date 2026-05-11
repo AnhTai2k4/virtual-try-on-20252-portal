@@ -19,7 +19,7 @@ Page(title="Settings")
     //- CARD 1: CUSTOMER ACCESS (SHOPIFY METAFIELD)
     Card(class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden")
       div
-        h2(class="text-base font-semibold text-gray-900 mb-2") Customer Access
+        Text(variant="headingMd", as="h2" class="text-lg font-semibold text-gray-900") Customer Access
         p(class="text-sm text-gray-600 mb-5 leading-relaxed") When enabled, only logged-in customers can use the virtual try-on. Anonymous shoppers see a login prompt instead of the upload buttons. Helps reduce abuse and ties try-ons to customer profiles.
         
         label(class="flex items-center gap-3 cursor-pointer group")
@@ -49,7 +49,7 @@ Page(title="Settings")
 
           //- Select: Limit Period (Giữ lại cho tương lai)
           div(class="space-y-1.5")
-            label(class="block text-sm font-medium text-gray-800") Limit Period
+            label(class="block text-sm font-medium text-gray-800") Reset Period Limit
             div(class="relative")
               select(
                 v-model="settings.limitPeriod"

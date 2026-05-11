@@ -45,7 +45,7 @@ Page(title="Analytics")
         .flex.flex-col.gap-2.pr-6
           Text(variant="headingSm" as="h3" fontWeight="medium") Order Conversion Rate 
           .py-2(v-if="orderConversionRate > 0")
-            Text(variant="headingXl" as="p") {{ Math.floor(orderConversionRate) }} %
+            Text(variant="headingXl" as="p") {{ orderConversionRate.toFixed(1) }} %
           Banner(v-else tone="info")
             p No order conversion data available yet.
             
@@ -53,7 +53,7 @@ Page(title="Analytics")
         .flex.flex-col.gap-2.px-6.border-l.border-gray-200
           Text(variant="headingSm" as="h3" fontWeight="medium") Cart Conversion Rate 
           .py-2(v-if="cartConversionRate > 0")
-            Text(variant="headingXl" as="p") {{ Math.floor(cartConversionRate) }} %
+            Text(variant="headingXl" as="p") {{ cartConversionRate.toFixed(1) }} %
           Banner(v-else tone="info")
             p No cart conversion data available yet.
             
