@@ -1,177 +1,125 @@
 <template lang="pug">
+ui-save-bar(ref="saveBarRef")
+  button(variant="primary" @click="applySettings") Save
+  button(@click="resetSelection") Discard
+
 ui-title-bar(title="Taitta VTON - Products")
 
 Page(title="Product Management")
  
-  Card(class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden")
-    div(class="px-2 ")
-      div(class="flex justify-between items-center mb-1.5")
-        Text(variant="headingMd", as="h2" class="text-lg font-semibold text-gray-900") Virtual Try-On Button Visibility
-      div(class="flex justify-between")
-        Text(variant="bodyMd", as="p" class="text-gray-600") Enable collections to activate try-on for all products, or select individual products for custom settings.
+  Layout(style = "margin-bottom: 2rem;")
+    LayoutSection
+      Card
+        BlockStack(gap="200")
+          Text(variant="headingMd" as="h2") Virtual Try-On Button Visibility
+          Text(variant="bodyMd" as="p" tone="subdued") Enable collections to activate try-on for all products, or select individual products for custom settings.
 
-  //- MAIN CARD: GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH"
+    LayoutSection
+      //- MAIN CARD: GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH"
+      Card
+        div(style="position: relative;")
+          //- MÀN HÌNH LOADING CHỜ LẤY MODE BAN ĐẦU
+          div(v-if="isInitializing" style="position: absolute; inset: 0; z-index: 10; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;")
+            Spinner(size="large")
+            Text(variant="bodySm" fontWeight="medium" tone="subdued") Loading configuration...
 
-  Card(class="mb-12 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative")      
-    
-    //- MÀN HÌNH LOADING CHỜ LẤY MODE BAN ĐẦU
-    div(v-if="isInitializing" class="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3")
-      svg(class="animate-spin h-7 w-7 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
-        circle(class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
-        path(class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
-      span(class="text-sm font-medium text-gray-600") Loading configuration...
-
-    //- NỘI DUNG CARD CHÍNH
-    div(:class="{ 'opacity-40 pointer-events-none transition-opacity': isInitializing }")
-      div(class="px-2 py-5 border-b border-gray-200 bg-gray-50/50")
-        div(class="flex justify-between items-start")
-          
-          //- Khối bên trái: Title + Subtitle
-          div(class="flex gap-4")
-            div(class="text-sm")
-              div(class="flex items-center gap-2.5 mb-2")
-                Text(variant="headingMd", as="h1" class="text-lg font-semibold text-gray-900 ") Choose product to launch
-              
-              //- Subtitle giải thích chi tiết
-              p(class="mt-1.5 text-gray-600 leading-relaxed max-w-2xl") 
-                | Select where the Virtual Try-On button should appear on your storefront. You can apply it globally, restrict it to specific items, or turn it off completely.
-
-          //- Khối bên phải: Nút Help/Guide
-          button(class="hidden md:flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors mt-1")
-            svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-              path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z")
-            | View guide
-        
-      //- BODY (RADIO OPTIONS)
-      div(class="p-4 ")
-        
-        //- Option 1: Specific products
-        label(class="relative flex items-start gap-4 cursor-pointer group p-4 -mx-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200")
-          div(class="pt-0.5 flex-shrink-0")
-            input(
-              type="radio" 
-              v-model="launchMode" 
-              value="specific_products" 
-              @change="handleModeChange"
-              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900 focus:ring-offset-0 mt-0.5"
-            )
-          div
-            div(class="font-medium text-gray-900") Specific products
-            div(class="text-sm text-gray-500 mt-1 leading-relaxed") Choose products to apply this option set. Learn more about #[a(href="#" class="text-blue-600 hover:underline") apply on products]
-        
-        //- Option 2: Specific variants
-        label(class="relative flex items-start gap-4 cursor-pointer group p-4 -mx-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200")
-          div(class="pt-0.5 flex-shrink-0")
-            input(
-              type="radio" 
-              v-model="launchMode" 
-              value="specific_variants" 
-              @change="handleModeChange"
-              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900 focus:ring-offset-0 mt-0.5"
-            )
-          div
-            div(class="font-medium text-gray-900") Specific variants
-            div(class="text-sm text-gray-500 mt-1 leading-relaxed") Choose specific variants to apply this option set. Learn more about #[a(href="#" class="text-blue-600 hover:underline") apply on specific variants]
-        
-        //- Option 3: All products
-        label(class="relative flex items-start gap-4 cursor-pointer group p-4 -mx-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200")
-          div(class="pt-0.5 flex-shrink-0")
-            input(
-              type="radio" 
-              v-model="launchMode" 
-              value="all" 
-              @change="handleModeChange"
-              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900 focus:ring-offset-0 mt-0.5"
-            )
-          div
-            div(class="font-medium text-gray-900") All products
-            div(class="text-sm text-gray-500 mt-1 leading-relaxed") Apply this option set to all products on your store, except for those that have been applied manually or automatically.
-
-        //- Option 4: Disable on all products (THÊM MỚI Ở ĐÂY)
-        label(class="relative flex items-start gap-4 cursor-pointer group p-4 -mx-4 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200")
-          div(class="pt-0.5 flex-shrink-0")
-            input(
-              type="radio" 
-              v-model="launchMode" 
-              value="none" 
-              @change="handleModeChange"
-              class="w-4 h-4 text-gray-900 border-gray-400 focus:ring-gray-900 focus:ring-offset-0 mt-0.5"
-            )
-          div
-            div(class="font-medium text-gray-900") Disable on all products
-            div(class="text-sm text-gray-500 mt-1 leading-relaxed") Deactivate the Virtual Try-On button completely across your entire store.
-
-        //- ==========================================
-        //- VÙNG CHỌN SẢN PHẨM & HIỂN THỊ DANH SÁCH
-        //- ==========================================
-        //- Ẩn khung này nếu chọn 'all' hoặc 'none'
-        div(v-show="launchMode === 'specific_products' || launchMode === 'specific_variants'" class="pt-6 border-t border-gray-200 mt-4")
-          
-          div(class="flex items-center justify-between mb-4")
-            button(
-              v-if="launchMode === 'specific_products' || launchMode === 'specific_variants'"
-              @click="triggerPicker"
-              class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm active:bg-gray-100"
-            ) {{ launchMode === 'specific_products' ? 'Browse products' : 'Browse variants' }}
+          //- NỘI DUNG CARD CHÍNH
+          BlockStack(:class="{ 'opacity-40 pointer-events-none transition-opacity': isInitializing }" gap="400")
             
-            div(class="text-sm text-gray-500 font-medium") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
-
-          //- Loading State khi đang fetch data cũ
-          div(v-if="isLoadingData" class="py-10 text-center flex flex-col justify-center items-center gap-3 bg-gray-50 rounded-lg border border-dashed border-gray-300")
-            svg(class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
-              circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
-              path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
-            span(class="text-sm text-gray-500") Loading selected items...
-
-          //- Danh sách Item đã chọn
-          div(v-else-if="selectedItems.length > 0" class="border border-gray-200 rounded-lg overflow-hidden max-h-80 overflow-y-auto custom-scrollbar bg-white")
-            div(
-              v-for="(item, index) in selectedItems" 
-              :key="item.id" 
-              class="flex items-center justify-between p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors group"
-            )
-              div(class="flex items-center gap-3.5")
-                div(class="relative w-10 h-10 rounded border border-gray-200 bg-white overflow-hidden flex-shrink-0")
-                  img(v-if="item.image" :src="item.image" class="w-full h-full object-cover")
-                  div(v-else class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 text-xs") 📦
-                span(class="text-sm font-medium text-gray-800 line-clamp-1") {{ item.title }}
+            BlockStack(gap="200")
+              InlineStack(align="space-between" blockAlign="start")
+                Text(variant="headingMd" as="h1") Choose product to launch
+                Button(plain) View guide
+              Text(variant="bodyMd" tone="subdued") Select where the Virtual Try-On button should appear on your storefront. You can apply it globally, restrict it to specific items, or turn it off completely.
+            
+            Divider
+            
+            //- BODY (RADIO OPTIONS)
+            BlockStack(gap="400")
               
-              button(
-                @click="removeItem(index)" 
-                class="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                title="Remove item"
+              //- Option 1: Specific products
+              RadioButton(
+                label="Specific products"
+                helpText="Choose products to apply this option set."
+                id="mode_specific_products"
+                name="launchMode"
+                value="specific_products"
+                :checked="launchMode === 'specific_products'"
+                @change="() => { launchMode = 'specific_products'; handleModeChange(); }"
               )
-                svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-                  path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16")
-          
-          //- Empty State
-          div(v-else class="py-10 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300 flex flex-col items-center")
-            span(class="text-2xl mb-2") 🛍️
-            p(class="text-sm text-gray-500") No items selected yet.
-                  
-      //- FOOTER ACTIONS
-      div(class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-xl")
-        button(
-          @click="resetSelection"
-          :disabled="isApplying"
-          class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm disabled:opacity-50"
-        ) Discard
-        
-        button(
-          @click="applySettings"
-          :disabled="isApplying"
-          class="px-6 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-black transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-        ) 
-          span(v-if="!isApplying") Save settings
-          span(v-else) Saving...
-          svg(v-if="isApplying" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24")
-            circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
-            path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
+              
+              //- Option 2: Specific variants
+              RadioButton(
+                label="Specific variants"
+                helpText="Choose specific variants to apply this option set."
+                id="mode_specific_variants"
+                name="launchMode"
+                value="specific_variants"
+                :checked="launchMode === 'specific_variants'"
+                @change="() => { launchMode = 'specific_variants'; handleModeChange(); }"
+              )
+              
+              //- Option 3: All products
+              RadioButton(
+                label="All products"
+                helpText="Apply this option set to all products on your store, except for those that have been applied manually or automatically."
+                id="mode_all"
+                name="launchMode"
+                value="all"
+                :checked="launchMode === 'all'"
+                @change="() => { launchMode = 'all'; handleModeChange(); }"
+              )
+
+              //- Option 4: Disable on all products
+              RadioButton(
+                label="Disable on all products"
+                helpText="Deactivate the Virtual Try-On button completely across your entire store."
+                id="mode_none"
+                name="launchMode"
+                value="none"
+                :checked="launchMode === 'none'"
+                @change="() => { launchMode = 'none'; handleModeChange(); }"
+              )
+
+            //- VÙNG CHỌN SẢN PHẨM & HIỂN THỊ DANH SÁCH
+            div(v-show="launchMode === 'specific_products' || launchMode === 'specific_variants'")
+              Divider
+              
+              div(style="margin-top: var(--p-space-400)")
+                InlineStack(align="space-between" blockAlign="center" style="margin-bottom: var(--p-space-400)")
+                  Button(@click="triggerPicker") {{ launchMode === 'specific_products' ? 'Choose products' : 'Choose variants' }}
+                  Text(variant="bodySm" tone="subdued" fontWeight="medium") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
+
+                //- Loading State khi đang fetch data cũ
+                BlockStack(v-if="isLoadingData" inlineAlign="center" style="padding: 40px 0; align-items: center;")
+                  Spinner(size="small")
+                  Text(variant="bodySm" tone="subdued") Loading selected items...
+
+                //- Danh sách Item đã chọn
+                div(v-else-if="selectedItems.length > 0" class="custom-scrollbar" style="border: 1px solid var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); max-height: 320px; overflow-y: auto;")
+                  div(
+                    v-for="(item, index) in selectedItems" 
+                    :key="item.id" 
+                    style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--p-color-border-subdued);"
+                  )
+                    InlineStack(gap="300" blockAlign="center")
+                      div(style="width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--p-color-border-subdued); overflow: hidden; flex-shrink: 0; background: var(--p-color-bg-surface-secondary); display: flex; align-items: center; justify-content: center;")
+                        img(v-if="item.image" :src="item.image" style="width: 100%; height: 100%; object-fit: cover;")
+                        span(v-else style="color: var(--p-color-text-subdued); font-size: 12px;") 📦
+                      Text(variant="bodySm" fontWeight="medium") {{ item.title }}
+                    
+                    Button(plain destructive @click="removeItem(index)" ) Remove
+                
+                //- Empty State
+                div(v-else style="padding: 40px 0; text-align: center; background: var(--p-color-bg-surface-secondary); border-radius: var(--p-border-radius-200); border: 1px dashed var(--p-color-border-subdued);")
+                  Text(variant="headingLg" as="span") 🛍️
+                  div(style="margin-top: 8px;")
+                    Text(variant="bodySm" tone="subdued") No items selected yet.
 
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { getShopData, getProductsData, batchUpdateMetafields } from '../service/ProductService';
 
 // Định nghĩa khung xương (Interface) cho 1 dòng dữ liệu hiển thị trên danh sách
@@ -190,6 +138,25 @@ const isLoadingData = ref<boolean>(false);
 const isApplying = ref<boolean>(false);
 const shopId = ref<string | null>(null); 
 const previouslyEnabledIds = ref<string[]>([]);
+
+const saveBarRef = ref<any>(null);
+const initialSettingsStr = ref("");
+
+const updateInitialState = () => {
+  initialSettingsStr.value = JSON.stringify({ mode: launchMode.value, items: selectedItems.value.map(i => i.id) });
+  if (saveBarRef.value?.hide) saveBarRef.value.hide();
+};
+
+watch([launchMode, selectedItems, isLoadingData], () => {
+  if (isInitializing.value || isLoadingData.value) return;
+  const currentStr = JSON.stringify({ mode: launchMode.value, items: selectedItems.value.map(i => i.id) });
+  if (currentStr !== initialSettingsStr.value) {
+    if (saveBarRef.value?.show) saveBarRef.value.show();
+  } else {
+    if (saveBarRef.value?.hide) saveBarRef.value.hide();
+  }
+}, { deep: true });
+
 
 // HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
 const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> => {
@@ -238,6 +205,9 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
         selectedItems.value = enabledVariants;
       }
     }
+
+    if (isInitialLoad) updateInitialState();
+
   } catch (error) {
     console.error("Lỗi fetch current state:", error);
   } finally {
