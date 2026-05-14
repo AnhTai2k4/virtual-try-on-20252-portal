@@ -6,8 +6,8 @@ import Dashboard from '@/pages/Dashboard.vue';
 import Settings from '@/pages/Settings.vue';
 import Analytics from '@/pages/Analytics.vue';
 import Customize from '@/pages/Customize.vue';
-import Manage from '@/pages/Manage.vue';
 import Products from '@/pages/Products.vue';
+import Pricings from '@/pages/Pricings.vue';
 
 
 const routes = [
@@ -40,9 +40,9 @@ const routes = [
         component: Customize,
       },
       {
-        path: 'manages',
-        name: 'manages',
-        component: Manage,
+        path: 'pricings',
+        name: 'pricings',
+        component: Pricings,
       },
       {
         path: 'products',

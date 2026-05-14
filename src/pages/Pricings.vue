@@ -2,33 +2,41 @@
 Page(title="Pricing & Billing")
   BlockStack(gap="600" style="margin-bottom: 2rem;")
     
-    //- Current Plan
+    //- ==========================================
+    //- CURRENT PLAN (Đã đổ dữ liệu động từ API)
+    //- ==========================================
     Card(roundedAbove="sm")
       BlockStack(gap="400")
         InlineStack(align="space-between" blockAlign="start")
           BlockStack(gap="100")
             Text(variant="headingLg" as="h2") Current Plan
-            Text(tone="subdued" as="p") You're on the Free Trial plan
-          Badge(tone="success") 20 credits remaining
+            Text(tone="subdued" as="p") You're on the {{ currentPlanData.name }} plan
+          Badge(tone="success") {{ currentPlanData.remaining }} credits remaining
         
         Divider
         
         InlineStack(align="space-between" blockAlign="end")
           BlockStack(gap="0")
-            Text(variant="headingLg" as="div") 20
+            //- Hiển thị Skeleton thay vì số 0 nếu đang load
+            div(v-if="isLoadingUsage" class="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1")
+            Text(v-else variant="headingLg" as="div") {{ currentPlanData.quota }}
             Text(tone="subdued" as="div") Credits Available
+            
           BlockStack(gap="0" align="end")
-            Text(variant="headingLg" as="div") Free Trial
+            div(v-if="isLoadingUsage" class="h-8 w-24 bg-gray-200 rounded animate-pulse mb-1")
+            Text(v-else variant="headingLg" as="div") {{ currentPlanData.name }}
             Text(tone="subdued" as="div") Current Tier
 
+    //- ==========================================
     //- Pricing Cards
+    //- ==========================================
     Grid
-      //- Starter
+      //- go
       GridCell(:columnSpan="{xs: 6, sm: 6, md: 4, lg: 4, xl: 4}")
         Card(roundedAbove="sm")
           BlockStack(gap="400" class="h-full")
             BlockStack(gap="200")
-              Text(variant="headingXl" as="h3") Starter
+              Text(variant="headingXl" as="h3") Go
               InlineStack(blockAlign="baseline" gap="100")
                 Text(variant="heading3xl" as="span") $19.99
                 Text(tone="subdued" as="span") / month
@@ -46,16 +54,16 @@ Page(title="Pricing & Billing")
               ListItem Support tier: Email
 
             div(style="margin-top: auto")
-              Button(fullWidth @click="subscribePlan('starter')" :disabled="isProcessing === 'starter'") Select Plan
+              Button(fullWidth @click="subscribePlan('go')" :disabled="isProcessing === 'go'") Select Plan
 
-      //- Growth
+      //- pro
       GridCell(:columnSpan="{xs: 6, sm: 6, md: 4, lg: 4, xl: 4}")
         Card(roundedAbove="sm")
           BlockStack(gap="400" class="h-full")
             BlockStack(gap="200")
               div
                 Badge(tone="info") Most Popular
-              Text(variant="headingXl" as="h3") Growth
+              Text(variant="headingXl" as="h3") Pro
               InlineStack(blockAlign="baseline" gap="100")
                 Text(variant="heading3xl" as="span") $49.99
                 Text(tone="subdued" as="span") / month
@@ -65,7 +73,7 @@ Page(title="Pricing & Billing")
 
             List(type="bullet")
               ListItem 300 AI-powered try-on credits
-              ListItem Everything in Starter, plus:
+              ListItem Everything in Pro, plus:
               ListItem Lead capture and recovery
               ListItem Advanced analytics & insights
               ListItem Priority email support
@@ -74,14 +82,14 @@ Page(title="Pricing & Billing")
               ListItem Support tier: Priority email
 
             div(style="margin-top: auto")
-              Button(variant="primary" fullWidth @click="subscribePlan('growth')" :disabled="isProcessing === 'growth'") Select Plan
+              Button(variant="primary" fullWidth @click="subscribePlan('pro')" :disabled="isProcessing === 'pro'") Select Plan
 
-      //- Scale
+      //- Ultra
       GridCell(:columnSpan="{xs: 6, sm: 6, md: 4, lg: 4, xl: 4}")
         Card(roundedAbove="sm")
           BlockStack(gap="400" class="h-full")
             BlockStack(gap="200")
-              Text(variant="headingXl" as="h3") Pro 
+              Text(variant="headingXl" as="h3") Ultra 
               InlineStack(blockAlign="baseline" gap="100")
                 Text(variant="heading3xl" as="span") $99.00
                 Text(tone="subdued" as="span") / month
@@ -91,7 +99,7 @@ Page(title="Pricing & Billing")
 
             List(type="bullet")
               ListItem 1,000 AI-powered try-on credits
-              ListItem Everything in Growth, plus:
+              ListItem Everything in Ultra, plus:
               ListItem Branding removal
               ListItem Dedicated account manager
               ListItem 24/7 priority support
@@ -100,39 +108,72 @@ Page(title="Pricing & Billing")
               ListItem Support tier: 24/7 priority
 
             div(style="margin-top: auto")
-              Button(fullWidth @click="subscribePlan('scale')" :disabled="isProcessing === 'scale'") Select Plan
+              Button(fullWidth @click="subscribePlan('ultra')" :disabled="isProcessing === 'ultra'") Select Plan
 </template>
-<script setup lang="ts">
-import { ref } from 'vue';
 
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+// Import thêm fetchBillingUsage
+import { createSubscription, fetchBillingUsage } from '../service/PricingService'; 
+
+// State cho nút bấm
 const isProcessing = ref<string | null>(null);
+
+// State cho dữ liệu gói cước hiện tại
+const isLoadingUsage = ref(true);
+const currentPlanData = ref({
+  name: 'Free Trial', // Giá trị mặc định
+  remaining: 0,
+  quota: 0,
+});
+
+// Hàm gọi API lấy Usage khi vừa mở trang
+const loadUsageData = async () => {
+  isLoadingUsage.value = true;
+  try {
+    const data = await fetchBillingUsage();
+    
+    // Map dữ liệu từ API vào biến state
+    if (data && data.plan && data.usage) {
+      currentPlanData.value = {
+        name: data.plan.name || 'Free Trial',
+        remaining: data.usage.included_remaining || 0,
+        quota: data.plan.included_quota || 0
+      };
+    }
+  } catch (error) {
+    console.error("Không thể tải dữ liệu gói cước:", error);
+    // Nếu lỗi, vẫn có thể giữ nguyên text "Free Trial" mặc định
+  } finally {
+    isLoadingUsage.value = false;
+  }
+};
 
 const subscribePlan = async (planKey: string) => {
   isProcessing.value = planKey;
   try {
-    const response = await fetch(`/api/billing/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: planKey })
-    });
+    const responseData = await createSubscription(planKey);
 
-    if (!response.ok) throw new Error("Failed to create subscription");
-
-    const data = await response.json();
-
-    if (data.confirmationUrl) {
-      window.top!.location.href = data.confirmationUrl;
+    if (responseData && responseData.confirmation_url) {
+      window.top!.location.href = responseData.confirmation_url;
+    } else {
+      throw new Error("Missing confirmation_url in response");
     }
   } catch (error) {
     console.error("Error subscribing to plan:", error);
     (window as any).shopify?.toast?.show('Something went wrong', { isError: true });
+  } finally {
     isProcessing.value = null;
   }
 };
+
+// Kích hoạt gọi API ngay khi Component được gắn vào DOM
+onMounted(() => {
+  loadUsageData();
+});
 </script>
 
 <style scoped>
-/* Tuỳ chỉnh height 100% để các thẻ trong Grid có chiều cao bằng nhau */
 :deep(.Polaris-BlockStack.h-full) {
   height: 100%;
 }
