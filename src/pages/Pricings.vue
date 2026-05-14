@@ -11,7 +11,7 @@ Page(title="Pricing & Billing")
           BlockStack(gap="100")
             Text(variant="headingLg" as="h2") Current Plan
             Text(tone="subdued" as="p") You're on the {{ currentPlanData.name }} plan
-          Badge(tone="success") {{ currentPlanData.remaining }} credits remaining
+          Badge(tone="success") {{ currentPlanData.quota }} credits quota
         
         Divider
         
@@ -19,8 +19,8 @@ Page(title="Pricing & Billing")
           BlockStack(gap="0")
             //- Hiển thị Skeleton thay vì số 0 nếu đang load
             div(v-if="isLoadingUsage" class="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1")
-            Text(v-else variant="headingLg" as="div") {{ currentPlanData.quota }}
-            Text(tone="subdued" as="div") Credits Available
+            Text(v-else variant="headingLg" as="div") {{ currentPlanData.remaining }}
+            Text(tone="subdued" as="div") Credits Remaining
             
           BlockStack(gap="0" align="end")
             div(v-if="isLoadingUsage" class="h-8 w-24 bg-gray-200 rounded animate-pulse mb-1")
@@ -138,7 +138,7 @@ const loadUsageData = async () => {
       currentPlanData.value = {
         name: data.plan.name || 'Free Trial',
         remaining: data.usage.included_remaining || 0,
-        quota: data.plan.included_quota || 0
+        quota: data.usage.included_quota || 0
       };
     }
   } catch (error) {
