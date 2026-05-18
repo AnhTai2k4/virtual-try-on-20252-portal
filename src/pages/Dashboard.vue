@@ -23,53 +23,39 @@ Page(title="Dashboard")
               Badge(tone="info") {{ planName }} Plan
 
     LayoutSection
-      Card
+      Banner(v-if="setupSteps.addButton && setupSteps.addProduct" title="Widget Added Successfully" tone="success")
+        p Perfect! The Taitta Try-On button is now live on your product pages. Your customers can start trying on items virtually right away.
+
+      Banner(v-else title="Finish setting up Taitta VTON" tone="info")
         BlockStack(gap="400")
-          //- Header: Tiêu đề + nút Refresh
-          div(style="background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%); margin: calc(var(--p-space-400) * -1); margin-bottom: 0; padding: var(--p-space-400); border-radius: var(--p-border-radius-200) var(--p-border-radius-200) 0 0;")
-            InlineStack(align="space-between" blockAlign="center")
-              InlineStack(gap="200" blockAlign="center")
-                Icon(source="InfoIcon" tone="info")
-                Text(variant="headingMd" as="h2") Finish setting up Virtual Try-On
+          InlineStack(align="space-between" blockAlign="center")
+            Text(variant="bodyMd" as="p" tone="subdued") Two quick steps to activate Taitta on your storefront. Complete them in order.
+            Button(variant="plain" @click="refreshSetupSteps" :loading="isRefreshingSteps" icon="RefreshIcon") Refresh
 
-          BlockStack(gap="100")
+          BlockStack(gap="400")
+            //- Bước 1
             InlineStack(align="space-between" blockAlign="center")
-              Text(variant="bodyMd" as="p") Two quick steps to activate Virtual Try-On on your storefront. Complete them in order.
-              Button(plain @click="refreshSetupSteps" :loading="isRefreshingSteps")
-                Icon(source="RefreshIcon")
-                | Refresh
-
-          Divider
-
-          //- Bước 1: Add Try-On Button to Theme
-          div(style="padding: var(--p-space-300) 0;")
-            InlineStack(align="space-between" blockAlign="center")
-              InlineStack(gap="300" blockAlign="center")
-                //- Icon trạng thái: tích xanh nếu đã bật, số thứ tự nếu chưa
+              InlineStack(gap="300" blockAlign="start")
                 div(v-if="setupSteps.addButton" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
                   span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
-                div(v-else style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #8c9196; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #6d7175; font-weight: 600; font-size: 13px;") 1
+                div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
+                  span(style="color: #202223; font-weight: 600; font-size: 13px;") 1
                 BlockStack(gap="0")
-                  Text(variant="bodyMd" as="p" fontWeight="semibold") Add the Try-On Button
-                  Text(variant="bodySm" as="p" tone="subdued") Place the try-on button block on your product template in the Theme Editor.
-              //- Nút hành động
+                  Text(variant="bodyMd" as="p" fontWeight="medium") Add the Try-On Button
+                  Text(variant="bodyMd" as="p" tone="subdued") Place the try-on button block on your product template.
               Badge(v-if="setupSteps.addButton" tone="success") Done
               Button(v-else @click="goToThemeEditor") Add Try-On Button
 
-          Divider
-
-          //- Bước 2: Add Button to Product in Portal
-          div(style="padding: var(--p-space-300) 0;")
+            //- Bước 2
             InlineStack(align="space-between" blockAlign="center")
-              InlineStack(gap="300" blockAlign="center")
+              InlineStack(gap="300" blockAlign="start")
                 div(v-if="setupSteps.addProduct" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
                   span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
-                div(v-else style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #8c9196; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #6d7175; font-weight: 600; font-size: 13px;") 2
+                div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
+                  span(style="color: #202223; font-weight: 600; font-size: 13px;") 2
                 BlockStack(gap="0")
-                  Text(variant="bodyMd" as="p" fontWeight="semibold") Add Button to Product
-                  Text(variant="bodySm" as="p" tone="subdued") Select products and configure the launch mode in your portal.
+                  Text(variant="bodyMd" as="p" fontWeight="medium") Add Button to Product
+                  Text(variant="bodyMd" as="p" tone="subdued") Select products and configure the launch mode in your portal.
               Badge(v-if="setupSteps.addProduct" tone="success") Done
               Button(v-else @click="navigateTo('/products')") Manage Products
 
@@ -117,6 +103,7 @@ Page(title="Dashboard")
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchBillingUsage } from '../service/PricingService';
+import { checkAddButtonStep, checkAddProductStep } from '../service/DashboardService';
 
 const router = useRouter();
 
@@ -141,88 +128,6 @@ const setupSteps = ref({
 });
 const isRefreshingSteps = ref(false);
 
-/**
- * Kiểm tra Bước 1: App block đã được thêm vào product template trong theme chưa?
- * Cách làm: Dùng Shopify Direct API Access (không cần BE)
- *   1. Lấy danh sách themes → tìm theme đang active (role = main)
- *   2. Đọc file templates/product.json của theme đó
- *   3. Parse JSON, tìm xem có block nào chứa app handle của mình không
- */
-const checkAddButtonStep = async () => {
-  try {
-    const res = await fetch('shopify:admin/api/2024-10/graphql.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `{
-          themes(first: 1, roles: MAIN) {
-            nodes {
-              files(filenames: ["templates/product.json"], first: 1) {
-                nodes {
-                  body {
-                    ... on OnlineStoreThemeFileBodyText {
-                      content
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }`
-      })
-    });
-    
-    const data = await res.json();
-    
-    // Lấy nội dung file template từ JSON trả về
-    const themeNode = data?.data?.themes?.nodes?.[0];
-    const fileNode = themeNode?.files?.nodes?.[0];
-    const content = fileNode?.body?.content;
-
-    if (!content) {
-      console.warn('[Setup Step 1] Không đọc được templates/product.json qua GraphQL');
-      return false;
-    }
-
-    // Tìm app handle trong nội dung template
-    const hasAppBlock = content.includes('taitta-20252') || content.includes('app-sdk');
-    return hasAppBlock;
-  } catch (error) {
-    console.error('[Setup Step 1] LỖI:', error);
-    return false;
-  }
-};
-
-/**
- * Kiểm tra Bước 2: Shop đã cấu hình launch mode chưa?
- * Cách làm: Đọc shop metafield custom.vto_launch_mode qua Shopify GraphQL
- *   Nếu metafield tồn tại và có giá trị (all / specific_products / specific_variants)
- *   → bước này đã hoàn thành
- */
-const checkAddProductStep = async () => {
-  try {
-    const res = await fetch('shopify:admin/api/2024-10/graphql.json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `{
-          shop {
-            metafield(namespace: "custom", key: "vto_launch_mode") {
-              value
-            }
-          }
-        }`
-      })
-    });
-    const data = await res.json();
-    const launchMode = data?.data?.shop?.metafield?.value;
-    // Có giá trị hợp lệ VÀ khác "none" (disable all) → đã cấu hình
-    return !!launchMode && launchMode.length > 0 && launchMode !== 'none';
-  } catch (error) {
-    console.warn('[Setup] Không thể kiểm tra metafield vto_launch_mode:', error);
-    return false;
-  }
-};
 
 // Hàm tổng hợp: Chạy cả 2 bước kiểm tra song song
 const refreshSetupSteps = async () => {
