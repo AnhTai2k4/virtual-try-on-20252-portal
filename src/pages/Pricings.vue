@@ -188,17 +188,17 @@ const subscribePlan = async (planKey: string) => {
 const handleCancelSubscription = async () => {
   // Hỏi lại cho chắc chắn tránh khách bấm nhầm
   const confirmCancel = confirm("Are you sure you want to cancel your current subscription? You will be downgraded to the Free plan immediately.");
-  
+
   if (!confirmCancel) return;
 
   try {
     (window as any).shopify?.toast?.show('Canceling subscription...');
-    
+
     // Gọi API xuống Node.js Backend
     await cancelSubscription();
-    
+
     (window as any).shopify?.toast?.show('Subscription cancelled successfully!');
-    
+
     // Tải lại dữ liệu trang để UI nhảy về gói Free Trial
     await loadUsageData();
   } catch (error) {

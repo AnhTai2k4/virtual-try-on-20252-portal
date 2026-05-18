@@ -11,7 +11,7 @@ export const createSubscription = async (planKey: string) => {
 
       },
       // Request body truyền lên { "plan": "go" }
-      body: JSON.stringify({ plan: planKey }) 
+      body: JSON.stringify({ plan: planKey })
     });
 
     if (!response.ok) {
@@ -21,7 +21,7 @@ export const createSubscription = async (planKey: string) => {
     const result = await response.json();
 
     // Trả về thẳng object 'data' theo cấu trúc ảnh image_bf375c.png
-    return result.data; 
+    return result.data;
   } catch (error) {
     console.error("[PricingService] Lỗi khi tạo subscription:", error);
     throw error;
@@ -90,7 +90,7 @@ export const cancelSubscription = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({"prorate": false})
+      body: JSON.stringify({ "prorate": false })
     });
 
     if (!response.ok) {
