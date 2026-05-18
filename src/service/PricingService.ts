@@ -51,3 +51,55 @@ export const fetchBillingUsage = async () => {
     throw error;
   }
 };
+
+
+export const fetchBillingPlans = async () => {
+  try {
+    const token = await window.shopify.idToken();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/billing/plans`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch billing plans");
+    }
+
+    const result = await response.json();
+    return result.data; // Trả về mảng các gói cước
+  } catch (error) {
+    console.error("[PricingService] Lỗi khi lấy danh sách gói cước:", error);
+    throw error;
+  }
+};
+
+/**
+ * Gọi API Hủy gói cước hiện tại
+ */
+export const cancelSubscription = async () => {
+  try {
+    const token = await window.shopify.idToken();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/billing/cancel`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({"prorate": false})
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to cancel subscription");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[PricingService] Lỗi khi hủy gói cước:", error);
+    throw error;
+  }
+};

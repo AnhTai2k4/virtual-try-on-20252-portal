@@ -13,14 +13,14 @@ Page(title="Dashboard")
             Text(variant="bodyLg" as="p")
               strong See It On You Before You Buy
               |  - AI-powered Virtual Try-On that lets your customers visualize products on themselves, increasing confidence and reducing returns.
-            Link(url="https://anhtai-dev-store.myshopify.com" external) Visit Website &rarr;
+            Link(:url="'https://' + shopDomain" external) Visit Website &rarr;
 
           div(style="background: var(--p-color-bg-surface-secondary); padding: var(--p-space-400); border-radius: var(--p-border-radius-200); border: 1px solid var(--p-color-border-subdued);")
             InlineStack(align="space-between" blockAlign="center")
               BlockStack(gap="100")
                 Text(variant="bodySm" as="p" fontWeight="bold") Connected Store
-                Text(variant="bodyMd" as="p" fontWeight="semibold") anhtai-dev-store.myshopify.com
-              Badge(tone="info") Free Trial Plan
+                Text(variant="bodyMd" as="p" fontWeight="semibold") {{ shopDomain }}
+              Badge(tone="info") {{ planName }} Plan
 
     LayoutSection
       Banner(title="You're Almost Ready!" status="info" :action="{ content: 'Add to Theme', onAction: goToThemeEditor }")
@@ -35,9 +35,9 @@ Page(title="Dashboard")
 
           BlockStack(gap="200")
             InlineStack(align="space-between")
-              Text(variant="bodyMd" as="span") 2 / 10 try-ons
-              Text(variant="bodyMd" as="span" tone="subdued") 20%
-            ProgressBar(:progress="20" color="primary")
+              Text(variant="bodyMd" as="span") {{ usedCount }} / {{ includedQuota }} try-ons
+              Text(variant="bodyMd" as="span" tone="subdued") {{ usagePercentage }}%
+            ProgressBar(:progress="usagePercentage" color="primary")
 
     LayoutSection
       Banner(v-if="showUpgradeBanner" title="Upgrade for More Try-Ons" status="success" @dismiss="showUpgradeBanner = false" :action="{ content: 'Upgrade', onAction: () => navigateTo('/plan') }")
@@ -67,10 +67,22 @@ Page(title="Dashboard")
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { fetchBillingUsage } from '../service/PricingService';
 
 const router = useRouter();
+
+// Dữ liệu API và URL
+const shopDomain = ref('');
+const planName = ref('Free');
+const usedCount = ref(0);
+const includedQuota = ref(0);
+
+const usagePercentage = computed(() => {
+  if (includedQuota.value === 0) return 0;
+  return Math.min(100, Math.round((usedCount.value / includedQuota.value) * 100));
+});
 
 // Trạng thái hiển thị của Banner Upgrade
 const showUpgradeBanner = ref(true);
@@ -94,24 +106,27 @@ const goToThemeEditor = () => {
 };
 
 onMounted(async () => {
+  // Lấy shop domain từ URL
+  const urlParams = new URLSearchParams(window.location.search);
+  shopDomain.value = urlParams.get('shop') || '';
+
   try {
-    // ---------------------------------------------------------
-    // BẢN THẬT (Sau này khi ghép với team BE, code sẽ như thế này):
-    // const token = await shopify.idToken(); // Lấy token xác thực của Shopify
-    // const response = await axios.get('https://api.oe-vton.com/admin/store-info', {
-    //   headers: { Authorization: `Bearer ${token}` }
-    // });
-    // storeDomain.value = response.data.domain;
-    // currentPlan.value = response.data.plan_name;
-    // ---------------------------------------------------------
     const token = await shopify.idToken(); // Lấy token xác thực của Shopify
     console.log("Token Shopify nhận được:", token);
 
+    // Fetch billing usage data
+    const usageData = await fetchBillingUsage();
+    if (usageData) {
+      if (usageData.plan) {
+        planName.value = usageData.plan.name || 'Free';
+      }
+      if (usageData.usage) {
+        usedCount.value = usageData.usage.used_count || 0;
+        includedQuota.value = usageData.usage.included_quota || 0;
+      }
+    }
   } catch (error) {
-    console.error("Lỗi khi lấy dữ liệu từ Laravel:", error);
-    // Lưu ý: storeDomain và currentPlan cần được khai báo (ref) ở trên nếu bạn muốn sử dụng
-    // storeDomain.value = 'Không thể kết nối Server';
-    // currentPlan.value = 'Lỗi';
+    console.error("Lỗi khi lấy dữ liệu:", error);
   }
 });
 </script>
