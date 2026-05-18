@@ -50,10 +50,13 @@ Page(
           BlockStack(gap="400" class="h-full")
             BlockStack(gap="200")
               //- Badge tự động hiển thị nếu highlighted = true
-              div(v-if="plan.highlighted")
-                Badge(tone="info") {{ plan.badge || 'Most Popular' }}
+              InlineStack(align="space-between" blockAlign="center")
+                Text(variant="headingXl" as="h3") {{ plan.name }}
 
-              Text(variant="headingXl" as="h3") {{ plan.name }}
+                Badge(
+                  v-if="plan.highlighted"
+                  tone="info"
+                ) {{ plan.badge || 'Most Popular' }}
 
               InlineStack(blockAlign="baseline" gap="100")
                 Text(variant="heading3xl" as="span") ${{ plan.recurring_price }}

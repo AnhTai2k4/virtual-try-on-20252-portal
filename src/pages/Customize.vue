@@ -143,15 +143,20 @@ Page(title="Customize Appearance" )
               p(v-if="settings.titleText" style="color:#525252; font-size:14px; margin-bottom: 8px;  font-weight: 500;") {{ settings.titleText }}
 
               //- Button
-              button(
-                :style="{ backgroundColor: settings.bgColor, color: settings.textColor, borderRadius: settings.buttonShape === 'pill' ? '9999px' : settings.buttonShape === 'rounded' ? '8px' : '0px', fontFamily: settings.fontFamily, width: settings.buttonWidth === 'full' ? '100%' : 'auto', padding: settings.buttonWidth === 'auto' ? '10px 24px' : '10px 16px' }"
-                style="font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; border: none; cursor: pointer;"
+              VtoButton(
+                :btnText="settings.buttonText || 'Virtual Try-On'"
+                :btnColor="settings.bgColor"
+                :textColor="settings.textColor"
+                :buttonShape="settings.buttonShape"
+                :buttonWidth="settings.buttonWidth"
+                :fontFamily="settings.fontFamily"
+                :isProcessing="false"
               )
-                span {{ settings.buttonText || 'Virtual Try-On' }}
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
+import VtoButton from '../../sdk/src/components/VtoButton.vue';
 import {
   Page, Layout, LayoutSection, Card, BlockStack, InlineStack,
   Text, TextField, Checkbox, Button, Divider, Spinner

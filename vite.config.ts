@@ -8,14 +8,14 @@ export default defineConfig({
   plugins: [
     vue(),
     svgLoader(),
-    tailwindcss(), 
+    tailwindcss(),
   ],
   define: {
     'process.env': {},
   },
   resolve: {
     alias: {
-      '~':  path.resolve(__dirname, './node_modules'),
+      '~': path.resolve(__dirname, './node_modules'),
       '@': path.resolve(__dirname, './src'),
       '@icons': path.resolve(__dirname, './node_modules/@shopify/polaris-icons/dist/svg'),
     },

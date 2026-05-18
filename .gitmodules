@@ -1,0 +1,3 @@
+[submodule "sdk"]
+	path = sdk
+	url = https://github.com/oe-intern/virtual-try-on-20252-sdk.git
