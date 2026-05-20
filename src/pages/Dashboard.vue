@@ -27,37 +27,45 @@ Page(title="Dashboard")
         p Perfect! The Taitta Try-On button is now live on your product pages. Your customers can start trying on items virtually right away.
 
       Banner(v-else title="Finish setting up Taitta VTON" tone="info")
-        BlockStack(gap="400")
+        //- Hiển thị Loading Spinner trong lúc fetch
+        BlockStack(v-if="isRefreshingSteps" inlineAlign="center" style="padding: 16px 0; align-items: center;")
+          Spinner(size="large")
+          Text(variant="bodyMd" tone="subdued" style="margin-top: 4px;") Checking setup status...
+          
+        //- Hiển thị 2 bước khi fetch xong
+        template(v-else)
+          BlockStack(gap="400")
           InlineStack(align="space-between" blockAlign="center")
             Text(variant="bodyMd" as="p" tone="subdued") Two quick steps to activate Taitta on your storefront. Complete them in order.
             Button(variant="plain" @click="refreshSetupSteps" :loading="isRefreshingSteps" icon="RefreshIcon") Refresh
 
           BlockStack(gap="400")
-            //- Bước 1
-            InlineStack(align="space-between" blockAlign="center")
-              InlineStack(gap="300" blockAlign="start")
-                div(v-if="setupSteps.addButton" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
-                div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #202223; font-weight: 600; font-size: 13px;") 1
-                BlockStack(gap="0")
-                  Text(variant="bodyMd" as="p" fontWeight="medium") Add the Try-On Button
-                  Text(variant="bodyMd" as="p" tone="subdued") Place the try-on button block on your product template.
-              Badge(v-if="setupSteps.addButton" tone="success") Done
-              Button(v-else @click="goToThemeEditor") Add Try-On Button
+            
+              //- Bước 1
+              InlineStack(align="space-between" blockAlign="center")
+                InlineStack(gap="300" blockAlign="start")
+                  div(v-if="setupSteps.addButton" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
+                    span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
+                  div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
+                    span(style="color: #202223; font-weight: 600; font-size: 13px;") 1
+                  BlockStack(gap="0")
+                    Text(variant="bodyMd" as="p" fontWeight="medium") Add the Try-On Button
+                    Text(variant="bodyMd" as="p" tone="subdued") Place the try-on button block on your product template.
+                Badge(v-if="setupSteps.addButton" tone="success") Done
+                Button(v-else @click="goToThemeEditor") Add Try-On Button
 
-            //- Bước 2
-            InlineStack(align="space-between" blockAlign="center")
-              InlineStack(gap="300" blockAlign="start")
-                div(v-if="setupSteps.addProduct" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
-                div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
-                  span(style="color: #202223; font-weight: 600; font-size: 13px;") 2
-                BlockStack(gap="0")
-                  Text(variant="bodyMd" as="p" fontWeight="medium") Add Button to Product
-                  Text(variant="bodyMd" as="p" tone="subdued") Select products and configure the launch mode in your portal.
-              Badge(v-if="setupSteps.addProduct" tone="success") Done
-              Button(v-else @click="navigateTo('/products')") Manage Products
+              //- Bước 2
+              InlineStack(align="space-between" blockAlign="center")
+                InlineStack(gap="300" blockAlign="start")
+                  div(v-if="setupSteps.addProduct" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
+                    span(style="color: #1a7f37; font-weight: 700; font-size: 14px;") ✓
+                  div(v-else style="width: 28px; height: 28px; border-radius: 50%; background: #e4e5e7; display: flex; align-items: center; justify-content: center;")
+                    span(style="color: #202223; font-weight: 600; font-size: 13px;") 2
+                  BlockStack(gap="0")
+                    Text(variant="bodyMd" as="p" fontWeight="medium") Add Button to Product
+                    Text(variant="bodyMd" as="p" tone="subdued") Select products and configure the launch mode in your portal.
+                Badge(v-if="setupSteps.addProduct" tone="success") Done
+                Button(v-else @click="navigateTo('/products')") Manage Products
 
     LayoutSection
       Card
@@ -126,7 +134,7 @@ const setupSteps = ref({
   addButton: false,    // Bước 1: Đã thêm block button vào product template trong Theme Editor chưa
   addProduct: false,   // Bước 2: Đã cấu hình launch mode (add button to product) trong portal chưa
 });
-const isRefreshingSteps = ref(false);
+const isRefreshingSteps = ref(true);
 
 
 // Hàm tổng hợp: Chạy cả 2 bước kiểm tra song song

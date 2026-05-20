@@ -1,4 +1,5 @@
 <template lang="pug">
+ui-title-bar(title="Taitta VTON - Analytics")
 Page(title="Analytics")
   
   //- =====================================
@@ -7,15 +8,22 @@ Page(title="Analytics")
   InlineStack(align="space-between" blockAlign="center" style="margin-bottom: var(--p-space-500)")
     Text(variant="bodySm" as="p" tone="subdued") Data updated daily (UTC).
     
-    //- Dropdown chọn ngày (Khóa lại khi đang loading)
-    div(style="width: 160px;")
-      Select(
-        label="Date range"
-        labelHidden
-        :options="[{label: 'Last 7 days', value: '7'}, {label: 'Last 30 days', value: '30'}, {label: 'Last 90 days', value: '90'}]"
-        v-model="selectedPeriod"
-        :disabled="isLoading"
-      )
+    InlineStack(gap="200" blockAlign="center")
+      //- Chọn ngày bắt đầu và kết thúc nếu là custom
+      InlineStack(v-if="selectedPeriod === 'custom'" gap="200" blockAlign="center")
+        TextField(v-model="customStartDate" type="date" label="Start date" labelHidden)
+        span(style="color: var(--p-color-text-subdued)") to
+        TextField(v-model="customEndDate" type="date" label="End date" labelHidden)
+        Button(@click="fetchAnalytics" :disabled="isLoading") Apply
+        
+      div(style="width: 160px;")
+        Select(
+          label="Date range"
+          labelHidden
+          :options="dateOptions"
+          v-model="selectedPeriod"
+          :disabled="isLoading"
+        )
 
   //- =====================================
   //- TRẠNG THÁI LOADING (HIỂN THỊ KHI GỌI API)
@@ -89,19 +97,36 @@ Page(title="Analytics")
     //- CARD 3: BẢNG DỮ LIỆU (DATA TABLE)
     Card
       BlockStack(gap="400")
-        Text(variant="headingMd" as="h2" fontWeight="bold") Most Tried-On Products
+        InlineStack(align="space-between" blockAlign="center")
+          Text(variant="headingMd" as="h2" fontWeight="bold") Most Tried-On Products
+          
+          div(style="width: 250px;")
+            TextField(
+              v-model="searchQuery" 
+              placeholder="Search product..." 
+              clearButton 
+              @clear-button-click="searchQuery = ''"
+              autoComplete="off"
+              label="Search product"
+              labelHidden
+            )
         
         div(style="border: 1px solid var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); overflow: hidden;")
           DataTable(
             :columnContentTypes="['text', 'numeric', 'numeric']"
             :headings="['Product', 'Try-Ons', '% of Total']"
-            :rows="tableRows"
+            :rows="filteredAndPaginatedRows"
           )
+          
+        InlineStack(align="center" blockAlign="center" gap="400" style="margin-top: var(--p-space-200)")
+          Button(:disabled="currentPage <= 1" @click="handlePrevious" size="micro") &larr;
+          Text(variant="bodyMd" as="span" fontWeight="medium") {{ currentPage }} / {{ totalPages || 1 }}
+          Button(:disabled="currentPage >= totalPages" @click="handleNext" size="micro") &rarr;
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'; 
-import { Page, Card, Text, Banner, DataTable, Tooltip, InlineStack, BlockStack, Grid, GridCell, Select, Spinner } from '@ownego/polaris-vue';
+import { ref, onMounted, watch, computed } from 'vue'; 
+import { Page, Card, Text, Banner, DataTable, Tooltip, InlineStack, BlockStack, Grid, GridCell, Select, Spinner, TextField, Button } from '@ownego/polaris-vue';
 import { getOverview, getTopProducts } from '@/service/AnalyticService';
 
 // 1. Dùng thư viện Line thay vì Bar
@@ -116,11 +141,57 @@ ChartJS.register(Title, ChartTooltip, Legend, LineElement, PointElement, Categor
 // ==========================================
 const isLoading = ref(true); // BIẾN TRẠNG THÁI LOADING
 const selectedPeriod = ref('30'); // Mặc định là Last 30 days
+const customStartDate = ref('');
+const customEndDate = ref('');
+
+const dateOptions = [
+  {label: 'All time', value: 'all'},
+  {label: 'Last 7 days', value: '7'},
+  {label: 'Last 30 days', value: '30'},
+  {label: 'Last 90 days', value: '90'},
+  {label: 'Custom time', value: 'custom'}
+];
+
 const totalRequests = ref(0);
 const totalGenerations = ref(0);
 const cartConversionRate = ref(0);
 const orderConversionRate = ref(0);
 const tableRows = ref([]);
+
+// State cho Search và Pagination
+const searchQuery = ref('');
+const currentPage = ref(1);
+
+// Reset trang về 1 khi người dùng gõ tìm kiếm
+watch(searchQuery, () => {
+  currentPage.value = 1;
+});
+
+// Computed lọc dữ liệu
+const filteredRows = computed(() => {
+  if (!searchQuery.value) return tableRows.value;
+  const q = searchQuery.value.toLowerCase();
+  return tableRows.value.filter(row => String(row[0]).toLowerCase().includes(q));
+});
+
+// Computed tính tổng số trang
+const totalPages = computed(() => {
+  return Math.ceil(filteredRows.value.length / 10) || 1;
+});
+
+// Computed cắt mảng cho trang hiện tại
+const filteredAndPaginatedRows = computed(() => {
+  const start = (currentPage.value - 1) * 10;
+  return filteredRows.value.slice(start, start + 10);
+});
+
+// Hàm chuyển trang
+const handlePrevious = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+const handleNext = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
 
 const chartData = ref({
   labels: [],
@@ -161,26 +232,36 @@ const fetchAnalytics = async () => {
   try {
     chartData.value = { labels: [], datasets: [] };
     
+    const params = {
+      period: selectedPeriod.value,
+      start_time: selectedPeriod.value === 'custom' ? customStartDate.value : undefined,
+      end_time: selectedPeriod.value === 'custom' ? customEndDate.value : undefined
+    };
+
     // Chạy song song 2 API cùng lúc để tăng tốc độ load
+    // Thêm catch cho getTopProducts để biểu đồ vẫn vẽ được nếu API này lỗi
     const [res, topProductsRes] = await Promise.all([
-      getOverview(selectedPeriod.value),
-      getTopProducts(selectedPeriod.value)
+      getOverview(params),
+      getTopProducts(params).catch(err => {
+        console.warn("Lỗi getTopProducts:", err);
+        return [];
+      })
     ]);
     
     // Xử lý Overview Data
-    totalRequests.value = res.totals.button_click;
-    totalGenerations.value = res.totals.success;
-    cartConversionRate.value = res.totals.cart_conversion_rate;
-    orderConversionRate.value = res.totals.order_conversion_rate;
+    totalRequests.value = res?.totals?.button_click || 0;
+    totalGenerations.value = res?.totals?.success || 0;
+    cartConversionRate.value = res?.totals?.cart_conversion_rate || 0;
+    orderConversionRate.value = res?.totals?.order_conversion_rate || 0;
     
     // Xử lý dữ liệu bảng
-    tableRows.value = topProductsRes.map(item => {
+    tableRows.value = Array.isArray(topProductsRes) ? topProductsRes.map(item => {
       const percentage = totalRequests.value > 0 ? ((item.request_count / totalRequests.value) * 100).toFixed(0) : '0';
       return [item.product_name, item.request_count.toString(), `${percentage}%`];
-    });
+    }) : [];
     
     // Xử lý dữ liệu biểu đồ
-    const apiData = res.series;
+    const apiData = res?.series || [];
     chartData.value = {
       labels: apiData.map(item => formatDate(item.date)),
       datasets: [
@@ -216,7 +297,17 @@ onMounted(() => {
 });
 
 // Tự động gọi lại API khi người dùng đổi ngày
-watch(selectedPeriod, () => {
-  fetchAnalytics();
+watch(selectedPeriod, (newVal) => {
+  if (newVal !== 'custom') {
+    fetchAnalytics();
+  } else {
+    // Nếu chọn custom, khởi tạo ngày mặc định (tháng trước -> nay) nếu chưa có
+    if (!customStartDate.value || !customEndDate.value) {
+      const today = new Date();
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      customStartDate.value = lastMonth.toISOString().split('T')[0];
+      customEndDate.value = today.toISOString().split('T')[0];
+    }
+  }
 });
 </script>
