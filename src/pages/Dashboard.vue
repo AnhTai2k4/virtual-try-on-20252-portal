@@ -27,12 +27,12 @@ Page(title="Dashboard")
         p Perfect! The Virtual Try-On button is now live on your product pages. Your customers can start trying on items virtually right away.
 
       Banner(v-else title="Finish setting up Staging Virtual Try On" tone="info")
-        //- Hiển thị Loading Spinner trong lúc fetch
+        //- Show Loading Spinner while fetching
         BlockStack(v-if="isRefreshingSteps" inlineAlign="center" style="padding: 16px 0; align-items: center;")
           Spinner(size="large")
           Text(variant="bodyMd" tone="subdued" style="margin-top: 4px;") Checking setup status...
           
-        //- Hiển thị 2 bước khi fetch xong
+        //- Show 2 steps when fetch is finished
         template(v-else)
           BlockStack(gap="400" )
           InlineStack(align="space-between" blockAlign="center" style="padding-bottom: 1rem;")
@@ -41,7 +41,7 @@ Page(title="Dashboard")
 
           BlockStack(gap="400")
             
-              //- Bước 1
+              //- Step 1
               InlineStack(align="space-between" blockAlign="center")
                 InlineStack(gap="300" blockAlign="start")
                   div(v-if="setupSteps.addButton" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
@@ -54,7 +54,7 @@ Page(title="Dashboard")
                 Badge(v-if="setupSteps.addButton" tone="success") Done
                 Button(v-else @click="goToThemeEditor") Add Try-On Button
 
-              //- Bước 2
+              //- Step 2
               InlineStack(align="space-between" blockAlign="center")
                 InlineStack(gap="300" blockAlign="start")
                   div(v-if="setupSteps.addProduct" style="width: 28px; height: 28px; border-radius: 50%; background: #c8f5d2; display: flex; align-items: center; justify-content: center;")
@@ -116,7 +116,7 @@ import { checkAddButtonStep, checkAddProductStep } from '../service/DashboardSer
 
 const router = useRouter();
 
-// Dữ liệu API và URL
+// API and URL Data
 const shopDomain = ref('');
 const planName = ref('Free');
 const usedCount = ref(0);
@@ -127,18 +127,18 @@ const usagePercentage = computed(() => {
   return Math.min(100, Math.round((usedCount.value / includedQuota.value) * 100));
 });
 
-// Trạng thái hiển thị của Banner Upgrade
+// Visibility state of the Upgrade Banner
 const showUpgradeBanner = ref(true);
 
-// Trạng thái các bước Setup Guide (chỉ còn 2 bước)
+// Setup Guide steps state (only 2 steps left)
 const setupSteps = ref({
-  addButton: false,    // Bước 1: Đã thêm block button vào product template trong Theme Editor chưa
-  addProduct: false,   // Bước 2: Đã cấu hình launch mode (add button to product) trong portal chưa
+  addButton: false,    // Step 1: Has the button block been added to the product template in Theme Editor
+  addProduct: false,   // Step 2: Has the launch mode (add button to product) been configured in the portal
 });
 const isRefreshingSteps = ref(true);
 
 
-// Hàm tổng hợp: Chạy cả 2 bước kiểm tra song song
+// Aggregate action: Run both check steps in parallel
 const refreshSetupSteps = async () => {
   isRefreshingSteps.value = true;
   try {
@@ -149,38 +149,38 @@ const refreshSetupSteps = async () => {
     setupSteps.value.addButton = buttonDone;
     setupSteps.value.addProduct = productDone;
   } catch (error) {
-    console.error('Lỗi khi refresh setup steps:', error);
+    console.error('Error refreshing setup steps:', error);
   } finally {
     isRefreshingSteps.value = false;
   }
 };
 
-// Hàm chuyển hướng trang nội bộ
+// Internal page redirect action
 const navigateTo = (path) => {
   router.push(path);
 };
 
-// Hàm mở Shopify Theme Editor (Sẽ xử lý logic sau)
+// Action to open Shopify Theme Editor (Logic to be processed later)
 const goToThemeEditor = () => {
-  // 1. Lấy tên miền của shop từ URL (Shopify luôn âm thầm truyền biến 'shop' vào iframe của bạn)
+  // 1. Retrieve the shop domain from URL (Shopify passes the 'shop' query parameter to your iframe)
   const urlParams = new URLSearchParams(window.location.search);
   const shopDomain = urlParams.get('shop') ; 
 
-  // 2. Lắp ráp thành đường link Admin hoàn chỉnh trỏ thẳng vào Theme Editor
+  // 2. Construct the full Admin link pointing directly to the Theme Editor
   const themeEditorUrl = `https://${shopDomain}/admin/themes/current/editor`;
 
-  // 3. Dùng '_blank' để trình duyệt bật sang một Tab mới
+  // 3. Use '_blank' to open the link in a new browser tab
   window.open(themeEditorUrl, '_blank');
 };
 
 onMounted(async () => {
-  // Lấy shop domain từ URL
+  // Get shop domain from URL
   const urlParams = new URLSearchParams(window.location.search);
   shopDomain.value = urlParams.get('shop') || '';
 
   try {
-    const token = await shopify.idToken(); // Lấy token xác thực của Shopify
-    console.log("Token Shopify nhận được:", token);
+    const token = await shopify.idToken(); // Get Shopify identity token
+    console.log("Shopify token received:", token);
 
     // Fetch billing usage data
     const usageData = await fetchBillingUsage();
@@ -194,10 +194,10 @@ onMounted(async () => {
       }
     }
   } catch (error) {
-    console.error("Lỗi khi lấy dữ liệu:", error);
+    console.error("Error retrieving data:", error);
   }
 
-  // Kiểm tra trạng thái các bước setup ngay khi trang load
+  // Check setup steps status immediately upon page load
   await refreshSetupSteps();
 });
 </script>

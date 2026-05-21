@@ -30,20 +30,20 @@ export const getCustomizationSettings = async () => {
     const shop = result.data?.shop;
     let settings = null;
     
-    // Parse JSON settings if they exist
+    // Parse JSON settings if the shop has saved configurations before
     if (shop?.metafield?.value) {
       settings = JSON.parse(shop.metafield.value);
     }
 
     return { shopId: shop?.id, settings };
   } catch (error) {
-    console.error("[CustomizeService] Lỗi khi tải cài đặt:", error);
+    console.error("[CustomizeService] Error loading customization settings:", error);
     throw error;
   }
 };
 
 /**
- * Save customization settings to Shop metafields via GraphQL
+ * Save theme customization settings to Shop Metafields
  */
 export const updateCustomizationSettings = async (shopId: string, settingsData: any) => {
   try {
@@ -89,7 +89,7 @@ export const updateCustomizationSettings = async (shopId: string, settingsData: 
 
     return result.data?.metafieldsSet?.metafields;
   } catch (error) {
-    console.error("[CustomizeService] Lỗi khi lưu cài đặt:", error);
+    console.error("[CustomizeService] Error saving customization settings:", error);
     throw error;
   }
 };

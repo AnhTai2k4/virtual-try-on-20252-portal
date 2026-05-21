@@ -1,6 +1,8 @@
+import appConfig from '@/configs/app';
+
 export const getSetting = async () => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/settings`, {
+  const response = await fetch(`${appConfig.API_URL}/api/portal/tryon/settings`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -21,7 +23,7 @@ export const getSetting = async () => {
 
 export const setSetting = async (data: object) => {
   const token = await window.shopify.idToken();
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/settings`, {
+  const response = await fetch(`${appConfig.API_URL}/api/portal/tryon/settings`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -77,7 +79,7 @@ export const fetchShopifyMetafield = async () => {
     // Return object containing Shop ID and login status
     return { shopId, requireLogin };
   } catch (error) {
-    console.error("[SettingService] Lỗi khi tải Shopify Metafield:", error);
+    console.error("[SettingService] Error fetching Shopify Metafield:", error);
     throw error;
   }
 };
@@ -122,7 +124,7 @@ export const updateShopifyMetafield = async (shopId: string, requireLogin: boole
 
     return true; // Return true on success
   } catch (error) {
-    console.error("[SettingService] Lỗi khi cập nhật Shopify Metafield:", error);
+    console.error("[SettingService] Error updating Shopify Metafield:", error);
     throw error;
   }
 };

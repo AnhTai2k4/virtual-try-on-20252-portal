@@ -8,14 +8,14 @@ ui-title-bar(title="Staging Virtual Try On - Settings")
 Page(title="Settings")
 
   //- ==========================================
-  //- MÀN HÌNH LOADING KHI LOAD DATA BAN ĐẦU
+  //- INITIAL DATA LOADING SCREEN
   //- ==========================================
   BlockStack(v-if="isLoading" inlineAlign="center" gap="400" style="padding: 100px 0; align-items: center;")
     Spinner(accessibilityLabel="Loading settings" size="large")
     Text(variant="bodyMd" as="p" tone="subdued") Loading settings...
 
   //- ==========================================
-  //- GIAO DIỆN SETTINGS (HIỂN THỊ KHI ĐÃ LOAD XONG)
+  //- SETTINGS INTERFACE (DISPLAYED WHEN LOADED)
   //- ==========================================
   Layout(v-else style = "margin-bottom: 2rem;")
     
@@ -97,18 +97,18 @@ import { getSetting, setSetting, fetchShopifyMetafield, updateShopifyMetafield }
 // ==========================================
 // STATE
 // ==========================================
-const isLoading = ref(true); // Trạng thái Load khi mới mở trang
-const isSaving = ref(false); // Trạng thái Load khi bấm nút Save
+const isLoading = ref(true); // Loading state on page mount
+const isSaving = ref(false); // Saving state during save operation
 const shopId = ref<string | null>(null);
 
 const saveBarRef = ref<any>(null);
 const initialSettingsStr = ref("");
 
 const settings = reactive({
-  requireLogin: false, // Lưu ở Shopify Metafield
-  dailyLimit: 5,       // Lưu ở Backend API
-  limitPeriod: 1,      // Lưu ở Backend API
-  retentionHours: 72   // Lưu ở Backend API
+  requireLogin: false, // Stored in Shopify Metafield
+  dailyLimit: 5,       // Stored in Backend API
+  limitPeriod: 1,      // Stored in Backend API
+  retentionHours: 72   // Stored in Backend API
 });
 
 
@@ -121,7 +121,7 @@ const retentionOptions = [
   { label: '30 days', value: 720 }
 ];
 
-// Theo dõi thay đổi để hiện Save Bar
+// Watch for changes to toggle Save Bar visibility
 watch(settings, (newVal) => {
   if (isLoading.value) return;
   const currentStr = JSON.stringify(newVal);
@@ -133,36 +133,36 @@ watch(settings, (newVal) => {
 }, { deep: true });
 
 // ==========================================
-// HÀM ĐIỀU PHỐI (ACTIONS)
+// COORDINATION ACTIONS
 // ==========================================
 const loadAllSettings = async () => {
   isLoading.value = true; 
   try {
-    // Chạy song song 2 request lấy dữ liệu
+    // Execute parallel requests to fetch configurations
     const [beSettings, shopifyData] = await Promise.all([
       getSetting(),
-      fetchShopifyMetafield() // Hàm import từ service
+      fetchShopifyMetafield() // Imported from SettingService
     ]);
 
-    // 1. Gán dữ liệu Backend
+    // 1. Assign Backend settings
     if (beSettings) {
       settings.dailyLimit = beSettings.try_on_limit_per_cycle || beSettings.daily_try_on_limit || 5;
       settings.limitPeriod = beSettings.usage_reset || 1;
       settings.retentionHours = beSettings.result_retention_hours || 72;
     }
 
-    // 2. Gán dữ liệu Metafield
+    // 2. Assign Metafield settings
     if (shopifyData.shopId) {
       shopId.value = shopifyData.shopId;
       settings.requireLogin = shopifyData.requireLogin;
     }
 
-    // Lưu lại trạng thái ban đầu để so sánh
+    // Save initial state for comparison
     initialSettingsStr.value = JSON.stringify(settings);
     if (saveBarRef.value?.hide) saveBarRef.value.hide();
 
   } catch (error) {
-    console.error("Lỗi khi load Settings:", error);
+    console.error("Error loading settings:", error);
     (window as any).shopify?.toast?.show('Failed to load settings', { isError: true });
   } finally {
     isLoading.value = false; 
@@ -180,7 +180,7 @@ const saveAllSettings = async () => {
   isSaving.value = true;
   try {
     if (!shopId.value) {
-      throw new Error("Không tìm thấy Shop ID, vui lòng tải lại trang.");
+      throw new Error("Shop ID not found, please reload the page.");
     }
 
     const backendPayload = {
@@ -189,20 +189,20 @@ const saveAllSettings = async () => {
       result_retention_hours: settings.retentionHours
     };
 
-    // Chạy song song 2 request lưu dữ liệu
+    // Run parallel requests to save data
     await Promise.all([
       setSetting(backendPayload),
-      updateShopifyMetafield(shopId.value, settings.requireLogin) // Truyền tham số cho service
+      updateShopifyMetafield(shopId.value, settings.requireLogin) // Pass arguments to SettingService
     ]);
 
     (window as any).shopify?.toast?.show('Settings saved successfully!');
     
-    // Cập nhật lại trạng thái ban đầu
+    // Update initial settings state
     initialSettingsStr.value = JSON.stringify(settings);
     if (saveBarRef.value?.hide) saveBarRef.value.hide();
 
   } catch (error) {
-    console.error("Lỗi khi lưu Settings:", error);
+    console.error("Error saving settings:", error);
     (window as any).shopify?.toast?.show('Failed to save settings', { isError: true });
   } finally {
     isSaving.value = false;

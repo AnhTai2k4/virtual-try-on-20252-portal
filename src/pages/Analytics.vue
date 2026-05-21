@@ -9,7 +9,7 @@ Page(title="Analytics")
     Text(variant="bodySm" as="p" tone="subdued") Data updated daily (UTC).
     
     InlineStack(gap="200" blockAlign="center")
-      //- Chọn ngày bắt đầu và kết thúc nếu là custom
+      //- Choose start and end dates if custom is selected
       InlineStack(v-if="selectedPeriod === 'custom'" gap="200" blockAlign="center")
         TextField(v-model="customStartDate" type="date" label="Start date" labelHidden)
         span(style="color: var(--p-color-text-subdued)") to
@@ -26,21 +26,21 @@ Page(title="Analytics")
         )
 
   //- =====================================
-  //- TRẠNG THÁI LOADING (HIỂN THỊ KHI GỌI API)
+  //- LOADING STATE (SHOWN DURING API CALLS)
   //- =====================================
   BlockStack(v-if="isLoading" inlineAlign="center" style="padding: 100px 0; align-items: center;")
     Spinner(size="large")
     Text(variant="bodyMd" tone="subdued") Loading analytics data...
 
   //- =====================================
-  //- TRẠNG THÁI DỮ LIỆU (HIỂN THỊ KHI ĐÃ CÓ DATA)
+  //- DATA STATE (SHOWN WHEN DATA IS LOADED)
   //- =====================================
   BlockStack(v-else gap="600" style="margin-bottom: 2rem;")
     
-    //- CARD 1: THỐNG KÊ (SUMMARY)
+    //- CARD 1: SUMMARY
     Card
       Grid
-        //- Cột 1: Order Conversion Rate
+        //- Column 1: Order Conversion Rate
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding-right: var(--p-space-600);")
             Tooltip(content="Total products converted to order / Total successful try-ons")
@@ -51,7 +51,7 @@ Page(title="Analytics")
             Banner(v-else tone="info")
               p No order conversion data available yet.
             
-        //- Cột 2: Cart Conversion Rate
+        //- Column 2: Cart Conversion Rate
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding: 0 var(--p-space-600); border-left: 1px solid var(--p-color-border-subdued);")
             Tooltip(content="Total products converted to cart / Total successful try-ons")
@@ -62,7 +62,7 @@ Page(title="Analytics")
             Banner(v-else tone="info")
               p No cart conversion data available yet.
             
-        //- Cột 3: Button Click
+        //- Column 3: Button Click
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding: 0 var(--p-space-600); border-left: 1px solid var(--p-color-border-subdued);")
             Text(variant="headingSm" as="h3" fontWeight="medium") Total Try-Ons
@@ -71,7 +71,7 @@ Page(title="Analytics")
             Banner(v-else tone="info")
               p No click data available yet.
             
-        //- Cột 4: Total Generations
+        //- Column 4: Total Generations
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding-left: var(--p-space-600); border-left: 1px solid var(--p-color-border-subdued);")
             Text(variant="headingSm" as="h3" fontWeight="medium") Total Successful Try-Ons 
@@ -79,7 +79,7 @@ Page(title="Analytics")
               Text(v-if="totalGenerations > 0" variant="heading3xl" as="p") {{ totalGenerations }}
               Text(v-else variant="heading3xl" as="p") 0
 
-    //- CARD 2: BIỂU ĐỒ (CHARTS)
+    //- CARD 2: CHARTS
     Card
       BlockStack(gap="400")
         Text(variant="headingSm" as="h3" fontWeight="medium") Daily Try-Ons
@@ -94,7 +94,7 @@ Page(title="Analytics")
           div(v-else style="height: 100%; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); background: var(--p-color-bg-surface-secondary);")
             Text(tone="subdued") No chart data available.
 
-    //- CARD 3: BẢNG DỮ LIỆU (DATA TABLE)
+    //- CARD 3: DATA TABLE
     Card
       BlockStack(gap="400")
         InlineStack(align="space-between" blockAlign="center")
@@ -129,18 +129,18 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { Page, Card, Text, Banner, DataTable, Tooltip, InlineStack, BlockStack, Grid, GridCell, Select, Spinner, TextField, Button } from '@ownego/polaris-vue';
 import { getOverview, getTopProducts } from '@/service/AnalyticService';
 
-// 1. Dùng thư viện Line thay vì Bar
+// 1. Use Line library instead of Bar
 import { Line } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip as ChartTooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, Filler } from 'chart.js';
 
-// 2. Đăng ký các thành phần cho biểu đồ Đường (Line)
+// 2. Register components for Line chart
 ChartJS.register(Title, ChartTooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, Filler);
 
 // ==========================================
-// STATE QUẢN LÝ DỮ LIỆU
+// DATA MANAGEMENT STATE
 // ==========================================
-const isLoading = ref(true); // BIẾN TRẠNG THÁI LOADING
-const selectedPeriod = ref('30'); // Mặc định là Last 30 days
+const isLoading = ref(true); // LOADING STATE VARIABLE
+const selectedPeriod = ref('30'); // Defaults to Last 30 days
 const customStartDate = ref('');
 const customEndDate = ref('');
 
@@ -158,34 +158,34 @@ const cartConversionRate = ref(0);
 const orderConversionRate = ref(0);
 const tableRows = ref([]);
 
-// State cho Search và Pagination
+// Search and Pagination state
 const searchQuery = ref('');
 const currentPage = ref(1);
 
-// Reset trang về 1 khi người dùng gõ tìm kiếm
+// Reset page to 1 when user types in search
 watch(searchQuery, () => {
   currentPage.value = 1;
 });
 
-// Computed lọc dữ liệu
+// Computed data filtering
 const filteredRows = computed(() => {
   if (!searchQuery.value) return tableRows.value;
   const q = searchQuery.value.toLowerCase();
   return tableRows.value.filter(row => String(row[0]).toLowerCase().includes(q));
 });
 
-// Computed tính tổng số trang
+// Computed total pages count
 const totalPages = computed(() => {
   return Math.ceil(filteredRows.value.length / 10) || 1;
 });
 
-// Computed cắt mảng cho trang hiện tại
+// Computed chunk slice for current page
 const filteredAndPaginatedRows = computed(() => {
   const start = (currentPage.value - 1) * 10;
   return filteredRows.value.slice(start, start + 10);
 });
 
-// Hàm chuyển trang
+// Page navigation handlers
 const handlePrevious = () => {
   if (currentPage.value > 1) currentPage.value--;
 };
@@ -198,7 +198,7 @@ const chartData = ref({
   datasets: []
 });
 
-// Options tối ưu cho biểu đồ đường
+// Optimized options for line chart
 const chartOptions = ref({
   responsive: true,
   maintainAspectRatio: false,
@@ -224,10 +224,10 @@ const formatDate = (dateStr) => {
 };
 
 // ==========================================
-// HÀM GỌI API
+// API ACTION FUNCTIONS
 // ==========================================
 const fetchAnalytics = async () => {
-  isLoading.value = true; // BẬT LOADING KHI BẮT ĐẦU
+  isLoading.value = true; // ENABLE LOADING ON INITIATION
   
   try {
     chartData.value = { labels: [], datasets: [] };
@@ -238,29 +238,29 @@ const fetchAnalytics = async () => {
       end_time: selectedPeriod.value === 'custom' ? customEndDate.value : undefined
     };
 
-    // Chạy song song 2 API cùng lúc để tăng tốc độ load
-    // Thêm catch cho getTopProducts để biểu đồ vẫn vẽ được nếu API này lỗi
+    // Run 2 APIs concurrently to optimize loading speed
+    // Add catch block for getTopProducts so chart still renders if this API fails
     const [res, topProductsRes] = await Promise.all([
       getOverview(params),
       getTopProducts(params).catch(err => {
-        console.warn("Lỗi getTopProducts:", err);
+        console.warn("Error in getTopProducts:", err);
         return [];
       })
     ]);
     
-    // Xử lý Overview Data
+    // Process Overview Data
     totalRequests.value = res?.totals?.button_click || 0;
     totalGenerations.value = res?.totals?.success || 0;
     cartConversionRate.value = res?.totals?.cart_conversion_rate || 0;
     orderConversionRate.value = res?.totals?.order_conversion_rate || 0;
     
-    // Xử lý dữ liệu bảng
+    // Process table rows
     tableRows.value = Array.isArray(topProductsRes) ? topProductsRes.map(item => {
       const percentage = totalRequests.value > 0 ? ((item.request_count / totalRequests.value) * 100).toFixed(0) : '0';
       return [item.product_name, item.request_count.toString(), `${percentage}%`];
     }) : [];
     
-    // Xử lý dữ liệu biểu đồ
+    // Process chart series
     const apiData = res?.series || [];
     chartData.value = {
       labels: apiData.map(item => formatDate(item.date)),
@@ -282,26 +282,26 @@ const fetchAnalytics = async () => {
     };
     
   } catch (error) {
-    console.error("Lỗi khi tải Analytics:", error);
-    // Bạn có thể show toast lỗi ở đây nếu cần
+    console.error("Error loading analytics:", error);
+    // Error toast can be added here if needed
   } finally {
-    isLoading.value = false; // TẮT LOADING DÙ THÀNH CÔNG HAY LỖI
+    isLoading.value = false; // DISABLE LOADING ON SUCCESS OR FAILURE
   }
 };
 
 // ==========================================
-// LIFECYCLE VÀ WATCHERS
+// LIFECYCLE AND WATCHERS
 // ==========================================
 onMounted(() => {
   fetchAnalytics();
 });
 
-// Tự động gọi lại API khi người dùng đổi ngày
+// Automatically call API when date range changes
 watch(selectedPeriod, (newVal) => {
   if (newVal !== 'custom') {
     fetchAnalytics();
   } else {
-    // Nếu chọn custom, khởi tạo ngày mặc định (tháng trước -> nay) nếu chưa có
+    // If custom is selected, initialize default dates (last month to today) if empty
     if (!customStartDate.value || !customEndDate.value) {
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());

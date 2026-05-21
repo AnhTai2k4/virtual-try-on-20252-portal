@@ -47,9 +47,9 @@ Page(title="Help Center & Documentation")
           Text(variant="headingMd" as="h3") FAQs
 
           BlockStack(gap="300")
-            //- Loop through FAQs
+            //- Iterate FAQ list
             Card(v-for="(faq, index) in faqs" :key="index")
-              //- FAQ item header
+              //- FAQ card header
               div(
                 @click="toggleAccordion(index)"
                 style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
@@ -58,7 +58,7 @@ Page(title="Help Center & Documentation")
                 div(
                   :style="{ transform: openAccordion === index ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', display: 'flex', alignItems: 'center' }"
                 )
-                  //- Chevron icon
+                  //- Small arrow on the right
                   svg(viewBox="0 0 20 20" style="width: 20px; height: 20px; fill: var(--p-color-icon-subdued);")
                     path(d="M7.646 14.354a.5.5 0 010-.708L11.293 10 7.646 6.354a.5.5 0 11.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708 0z")
                     

@@ -11,22 +11,22 @@ Page(title="Customize Appearance" )
   Card(v-if="isPageLoading")
     BlockStack(gap="400" inlineAlign="center" style="padding: 80px 0; align-items: center;")
       Spinner(size="large")
-      Text(variant="bodyMd" tone="subdued") Đang tải cấu hình...
+      Text(variant="bodyMd" tone="subdued") Loading configuration...
 
-  //- GIAO DIỆN CHÍNH
+  //- MAIN INTERFACE
   Layout(v-else style = "margin-bottom: 2rem;")
-    //- CỘT TRÁI: KHU VỰC CÀI ĐẶT
+    //- LEFT COLUMN: SETTINGS AREA
     LayoutSection
       Card
         BlockStack(gap="400")
-          //- Tiêu đề Card
+          //- Card Title
           Text(variant="headingMd" as="h2") Appearance
 
           //- 1. Background Color
           BlockStack(gap="200")
             Text(variant="bodyMd" as="label" fontWeight="medium") Background Color
             InlineStack(gap="300" blockAlign="start")
-              //- Nút chọn màu native kết hợp Polaris
+              //- Native color picker button combined with Polaris
               div(style="position: relative; width: 40px; height: 40px; border-radius: 4px; border: 1px solid #8c9196; overflow: hidden; cursor: pointer; flex-shrink: 0;")
                 input(type="color" v-model="settings.bgColor" style="position: absolute; top: -8px; left: -8px; width: 56px; height: 56px; cursor: pointer; border: none; outline: none;")
               div(style="max-width: 200px;")
@@ -116,18 +116,18 @@ Page(title="Customize Appearance" )
           InlineStack(align="start")
             Button(@click="resetToDefaults") Reset to Defaults
 
-    //- CỘT PHẢI: KHU VỰC PREVIEW
-    //- Dùng variant="oneThird" để cột này nhỏ hơn cột settings
+    //- RIGHT COLUMN: PREVIEW AREA
+    //- Use variant="oneThird" to make this column smaller than settings column
     LayoutSection(variant="oneThird")
       Card
         BlockStack(gap="400")
 
-          //- Tiêu đề Preview
+          //- Preview Title
           BlockStack(gap="100")
             Text(variant="headingMd" as="h2") Preview
             Text(variant="bodySm" tone="subdued") This is how the button will appear on product pages.
 
-          //- Khung Preview 
+          //- Preview Frame 
           div(style="padding: 20px; border: 1px solid var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); background: var(--p-color-bg-surface-secondary);")
             div(style="width: 100%; height: 160px; background: var(--p-color-bg-surface-tertiary); border-radius: var(--p-border-radius-200); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--p-color-border-subdued);")
               Text(variant="bodySm" tone="subdued" fontWeight="medium") Product Image
@@ -136,7 +136,7 @@ Page(title="Customize Appearance" )
             div(style="margin-bottom: 16px; margin-top: 4px;")
               Text(variant="bodyMd" tone="subdued") $49.99
 
-            //- Vùng bao bọc có Padding động
+            //- Wrapper area with dynamic padding
             div(:style="{ paddingTop: settings.paddingTop + 'px', paddingBottom: settings.paddingBottom + 'px' }")
 
               //- Title
@@ -162,10 +162,10 @@ import {
   Text, TextField, Checkbox, Button, Divider, Spinner
 } from '@ownego/polaris-vue';
 
-// 💡 IMPORT TỪ FILE SERVICE VỪA TẠO
+// IMPORT FROM SERVICE FILE
 import { getCustomizationSettings, updateCustomizationSettings } from '@/service/CustomizeService';
 
-// --- STATE CƠ BẢN ---
+// --- BASIC STATE ---
 const isSaving = ref(false);
 const isPageLoading = ref(true);
 const shopId = ref(null);
@@ -173,7 +173,7 @@ const shopId = ref(null);
 const saveBarRef = ref(null);
 const initialSettingsStr = ref("");
 
-// Dữ liệu cài đặt mặc định
+// Default customization settings
 const settings = reactive({
   bgColor: '#000000',
   textColor: '#FFFFFF',
@@ -186,7 +186,7 @@ const settings = reactive({
   buttonWidth: 'full'
 });
 
-// Hàm Reset về mặc định
+// Action to reset to default settings
 const resetToDefaults = () => {
   settings.bgColor = '#000000';
   settings.textColor = '#FFFFFF';
@@ -217,17 +217,17 @@ const discardSettings = () => {
 };
 
 // ==========================================================
-// 1. HÀM TẢI CÀI ĐẶT
+// 1. LOAD SETTINGS ACTION
 // ==========================================================
 const loadSettings = async () => {
   isPageLoading.value = true;
   try {
-    // Chỉ cần gọi 1 dòng từ Service
+    // Single call to CustomizeService
     const data = await getCustomizationSettings();
 
     if (data.shopId) shopId.value = data.shopId;
 
-    // Nếu có cài đặt cũ, gán đè lên state của Vue
+    // Override Vue state if previous settings exist
     if (data.settings) {
       settings.bgColor = data.settings.bgColor || '#111111';
       settings.textColor = data.settings.textColor || '#FFFFFF';
@@ -244,25 +244,25 @@ const loadSettings = async () => {
     if (saveBarRef.value?.hide) saveBarRef.value.hide();
 
   } catch (error) {
-    console.error("Lỗi khi tải giao diện:", error);
+    console.error("Error loading interface:", error);
   } finally {
     isPageLoading.value = false;
   }
 };
 
 // ==========================================================
-// 2. HÀM LƯU CÀI ĐẶT 
+// 2. SAVE SETTINGS ACTION
 // ==========================================================
 const saveSettings = async () => {
   if (!shopId.value) {
-    console.error("Chưa có Shop ID, không thể lưu.");
+    console.error("Shop ID is missing, cannot save.");
     return;
   }
 
   isSaving.value = true;
 
   try {
-    // Đẩy thẳng state xuống cho Service lo liệu
+    // Pass the state directly to the service to handle
     await updateCustomizationSettings(shopId.value, settings);
     window.shopify.toast.show('Settings saved successfully!');
 

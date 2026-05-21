@@ -1,3 +1,5 @@
+import appConfig from '@/configs/app';
+
 export const getOverview = async (params: { period: string, start_time?: string, end_time?: string }) => {
   const token = await window.shopify.idToken();
   let query = '';
@@ -10,7 +12,7 @@ export const getOverview = async (params: { period: string, start_time?: string,
     query = `range=${params.period}d`;
   }
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/overview?${query}`, {
+  const response = await fetch(`${appConfig.API_URL}/api/portal/tryon/analytics/overview?${query}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ export const getTopProducts = async (params: { period: string, start_time?: stri
     query = `period=${params.period}d`;
   }
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/portal/tryon/analytics/products?${query}&limit=20`, {
+  const response = await fetch(`${appConfig.API_URL}/api/portal/tryon/analytics/products?${query}&limit=20`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

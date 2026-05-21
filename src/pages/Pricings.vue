@@ -6,7 +6,7 @@ Page(
   BlockStack(gap="600" style="margin-bottom: 2rem;")
 
     //- ==========================================
-    //- CURRENT PLAN (Giữ nguyên)
+    //- CURRENT PLAN (Keep unchanged)
     //- ==========================================
     Card(roundedAbove="sm")
       BlockStack(gap="400")
@@ -30,16 +30,16 @@ Page(
             Text(tone="subdued" as="div") Current Tier
 
     //- ==========================================
-    //- PRICING CARDS (Đã đổ dữ liệu động bằng v-for)
+    //- PRICING CARDS (Dynamic data loaded via v-for)
     //- ==========================================
 
-    //- Skeleton Loading khi đang gọi API lấy danh sách gói
-    div(v-if="isLoadingPlans" class="flex justify-center items-center py-12")
+    //- Skeleton Loading while fetching the plans list
+    div(v-if="isLoadingUsage" class="flex justify-center items-center py-12")
       svg(class="animate-spin h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24")
         circle(class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4")
         path(class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z")
 
-    //- Hiển thị Grid khi có dữ liệu
+    //- Display Grid when data is available
     Grid(v-else)
       GridCell(
         v-for="plan in displayPlans" 
@@ -49,7 +49,7 @@ Page(
         Card(roundedAbove="sm")
           BlockStack(gap="400" class="h-full")
             BlockStack(gap="200")
-              //- Badge tự động hiển thị nếu highlighted = true
+              //- Badge automatically displayed if highlighted = true
               InlineStack(align="space-between" blockAlign="center")
                 Text(variant="headingXl" as="h3") {{ plan.name }}
 
@@ -62,12 +62,12 @@ Page(
                 Text(variant="heading3xl" as="span") ${{ plan.recurring_price }}
                 Text(tone="subdued" as="span") / month
 
-              //- Format số hiển thị có dấu phẩy (VD: 1,000)
+              //- Format number with commas (e.g. 1,000)
               Text(tone="subdued" as="p") {{ plan.included_vto_quota.toLocaleString() }} Try-Ons
 
             Divider
 
-            //- Lặp danh sách features từ API
+            //- Iterate features list from API
             List(type="bullet")
               ListItem(v-for="(feature, index) in plan.features" :key="index") {{ feature }}
 
@@ -78,7 +78,7 @@ Page(
                 @click="subscribePlan(plan.key)"
                 :disabled="isProcessing === plan.key || plan.name === currentPlanData.name"
               )
-                //- Đổi text dựa trên trạng thái gói
+                //- Switch text based on plan status
                 span(v-if="plan.name === currentPlanData.name") Current Plan
                 span(v-else) Select Plan
 </template>
@@ -99,33 +99,33 @@ const currentPlanData = ref({
   quota: 0,
 });
 // ==========================================
-// CẤU HÌNH GIAO DIỆN NÚT "MORE ACTIONS"
+// "MORE ACTIONS" BUTTON INTERFACE CONFIGURATION
 // ==========================================
 const pageActionGroups = computed(() => {
-  // Nếu đang dùng Free Trial, ẩn nút More actions đi
+  // If using Free Trial, hide More actions button
   if (currentPlanData.value.name === 'Free Trial' || currentPlanData.value.name === 'Trial') {
     return [];
   }
 
-  // Nếu đang dùng gói trả phí, render ra Dropdown
+  // If using a paid plan, render the Dropdown
   return [
     {
       title: 'More actions',
       actions: [
         {
           content: 'Cancel subscription',
-          destructive: true, // Thuộc tính này làm chữ có màu đỏ (Cảnh báo nguy hiểm)
+          destructive: true, // This attribute makes the text red (Danger warning)
           onAction: handleCancelSubscription,
         },
       ],
     },
   ];
 });
-// State cho danh sách Gói cước (Plans)
+// State for billing plans (Plans)
 const isLoadingPlans = ref(true);
 const plansData = ref<any[]>([]);
 
-// Lọc bỏ gói Free/Trial để giao diện chỉ hiện các gói trả phí
+// Filter out Free/Trial plans to only show paid plans on the interface
 const displayPlans = computed(() => {
   return plansData.value.filter(plan => !plan.is_free);
 });
@@ -145,7 +145,7 @@ const loadUsageData = async () => {
       };
     }
   } catch (error) {
-    console.error("Không thể tải dữ liệu gói cước hiện tại:", error);
+    console.error("Failed to load current plan details:", error);
   } finally {
     isLoadingUsage.value = false;
   }
@@ -159,7 +159,7 @@ const loadPlansData = async () => {
       plansData.value = data;
     }
   } catch (error) {
-    console.error("Không thể tải danh sách gói cước:", error);
+    console.error("Failed to load plans list:", error);
     (window as any).shopify?.toast?.show('Failed to load pricing plans', { isError: true });
   } finally {
     isLoadingPlans.value = false;
@@ -187,9 +187,9 @@ const subscribePlan = async (planKey: string) => {
 // ACTIONS
 // ==========================================
 
-// Hàm xử lý khi bấm nút Cancel
+// Cancel action handler
 const handleCancelSubscription = async () => {
-  // Hỏi lại cho chắc chắn tránh khách bấm nhầm
+  // Double check to prevent accidental cancellation
   const confirmCancel = confirm("Are you sure you want to cancel your current subscription? You will be downgraded to the Free plan immediately.");
 
   if (!confirmCancel) return;
@@ -197,15 +197,15 @@ const handleCancelSubscription = async () => {
   try {
     (window as any).shopify?.toast?.show('Canceling subscription...');
 
-    // Gọi API xuống Node.js Backend
+    // Call API to Node.js Backend
     await cancelSubscription();
 
     (window as any).shopify?.toast?.show('Subscription cancelled successfully!');
 
-    // Tải lại dữ liệu trang để UI nhảy về gói Free Trial
+    // Reload page data to revert UI to Free Trial plan
     await loadUsageData();
   } catch (error) {
-    console.error("Lỗi khi hủy gói:", error);
+    console.error("Error cancelling plan:", error);
     (window as any).shopify?.toast?.show('Failed to cancel subscription', { isError: true });
   }
 };
@@ -214,7 +214,7 @@ const handleCancelSubscription = async () => {
 // LIFECYCLE
 // ==========================================
 onMounted(() => {
-  // Gọi đồng thời cả 2 API để tối ưu tốc độ load
+  // Call both APIs concurrently to optimize loading speed
   Promise.all([
     loadUsageData(),
     loadPlansData()

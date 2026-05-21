@@ -15,15 +15,15 @@ Page(title="Product Management")
           Text(variant="bodyMd" as="p" tone="subdued") Enable collections to activate try-on for all products, or select individual products for custom settings.
 
     LayoutSection
-      //- Main card: launch configuration
+      //- MAIN CARD: "CHOOSE PRODUCT TO LAUNCH" INTERFACE
       Card
         div(style="position: relative;")
-          //- Loading screen for initial setup
+          //- INITIAL MODE LOADING SCREEN
           div(v-if="isInitializing" style="position: absolute; inset: 0; z-index: 10; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;")
             Spinner(size="large")
             Text(variant="bodySm" fontWeight="medium" tone="subdued") Loading configuration...
 
-          //- Main content block
+          //- MAIN CARD CONTENT
           BlockStack(:class="{ 'opacity-40 pointer-events-none transition-opacity': isInitializing }" gap="400")
             
             BlockStack(gap="200")
@@ -34,7 +34,7 @@ Page(title="Product Management")
             
             Divider
             
-            //- Radio button options for launch mode
+            //- BODY (RADIO OPTIONS)
             BlockStack(gap="400")
               
               //- Option 1: Specific products
@@ -81,7 +81,7 @@ Page(title="Product Management")
                 @change="() => { launchMode = 'none'; handleModeChange(); }"
               )
 
-            //- Product selection list container
+            //- PRODUCT SELECTION ZONE & LIST DISPLAY
             div(v-show="launchMode === 'specific_products' || launchMode === 'specific_variants'")
               Divider
               
@@ -90,12 +90,12 @@ Page(title="Product Management")
                   Button(@click="triggerPicker") {{ launchMode === 'specific_products' ? 'Choose products' : 'Choose variants' }}
                   Text(variant="bodySm" tone="subdued" fontWeight="medium") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
 
-                //- Loading state for selected items
+                //- Loading State while fetching previous configuration
                 BlockStack(v-if="isLoadingData" inlineAlign="center" style="padding: 40px 0; align-items: center;")
                   Spinner(size="small")
                   Text(variant="bodySm" tone="subdued") Loading selected items...
 
-                //- List of selected items
+                //- Selected items list
                 div(v-else-if="selectedItems.length > 0" class="custom-scrollbar" style="border: 1px solid var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); max-height: 320px; overflow-y: auto;")
                   div(
                     v-for="(item, index) in selectedItems" 
@@ -110,7 +110,7 @@ Page(title="Product Management")
                     
                     Button(plain destructive @click="removeItem(index)" ) Remove
                 
-                //- Empty state
+                //- Empty State
                 div(v-else style="padding: 40px 0; text-align: center; background: var(--p-color-bg-surface-secondary); border-radius: var(--p-border-radius-200); border: 1px dashed var(--p-color-border-subdued);")
                   Text(variant="headingLg" as="span") 🛍️
                   div(style="margin-top: 8px;")
@@ -122,7 +122,7 @@ Page(title="Product Management")
 import { ref, onMounted, watch } from 'vue';
 import { getShopData, getProductsData, batchUpdateMetafields } from '../service/ProductService';
 
-// Interface representing a selected product or variant item
+// Define schema interface for a single item row in the list
 interface SelectedItem {
   id: string;
   title: string;
@@ -158,7 +158,7 @@ watch([launchMode, selectedItems, isLoadingData], () => {
 }, { deep: true });
 
 
-// Fetch current launch configuration and selected items from Shopify
+// FETCH DATA FROM SHOPIFY
 const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> => {
   if (isInitialLoad) isInitializing.value = true;
   else isLoadingData.value = true;
@@ -174,7 +174,7 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
       launchMode.value = shop.launchMode?.value || 'specific_products';
     }
 
-    // Fetch products only if mode requires selection
+    // OPTIMIZED: Only fetch all products if the launch mode is set to specific
     if (launchMode.value === 'specific_products' || launchMode.value === 'specific_variants') {
       const products = await getProductsData();
 
@@ -209,14 +209,14 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
     if (isInitialLoad) updateInitialState();
 
   } catch (error) {
-    console.error("Lỗi fetch current state:", error);
+    console.error("Error fetching current state:", error);
   } finally {
     if (isInitialLoad) isInitializing.value = false;
     else isLoadingData.value = false;
   }
 };
 
-// UI event handlers
+// INTERFACE EVENT HANDLERS (UI ACTIONS)
 
 const handleModeChange = (): Promise<void> => fetchCurrentState(false);
 const resetSelection = (): Promise<void> => fetchCurrentState(true);
@@ -272,20 +272,20 @@ const triggerPicker = async (): Promise<void> => {
   selectedItems.value = finalSelectionList;
 };
 
-// Save configuration to Shopify Metafields
+// SYNC AND SAVE LOGIC (APPLY)
 const applySettings = async (): Promise<void> => {
   isApplying.value = true;
   
   try {
     const isAllMode = launchMode.value === 'all';
     
-    // Update global launch mode metafields
+    // Save the new launch mode (setting to 'none' automatically disables it in Liquid)
     await batchUpdateMetafields([shopId.value as string], [
       { namespace: "custom", key: "vto_launch_mode", value: launchMode.value },
       { namespace: "custom", key: "vto_enable_all", value: isAllMode ? "true" : "false" }
     ]);
 
-    // Update individual product/variant VTO enabled status
+    // OPTIMIZED: Only update individual item metafields if launch mode is set to specific
     if (launchMode.value === 'specific_products' || launchMode.value === 'specific_variants') {
       const currentSelectedIds = selectedItems.value.map(i => i.id);
       const idsToTurnOn = currentSelectedIds.filter(id => !previouslyEnabledIds.value.includes(id));
@@ -303,7 +303,7 @@ const applySettings = async (): Promise<void> => {
     await fetchCurrentState(true);
 
   } catch (error) {
-    console.error("Lỗi Apply:", error);
+    console.error("Error applying settings:", error);
     (window as any).shopify.toast.show('Failed to save settings', { isError: true });
   } finally {
     isApplying.value = false;
