@@ -1,5 +1,5 @@
 /**
- * Kiểm tra Bước 1: App block đã được thêm vào product template trong theme chưa?
+ * Step 1: Check if the app block is added to the product template in the theme
  */
 export const checkAddButtonStep = async (): Promise<boolean> => {
   try {
@@ -27,27 +27,36 @@ export const checkAddButtonStep = async (): Promise<boolean> => {
     
     const data = await res.json();
     
-    // Lấy nội dung file template từ JSON trả về
+    // Get template content from GraphQL response
     const themeNode = data?.data?.themes?.nodes?.[0];
     const fileNode = themeNode?.files?.nodes?.[0];
     const content = fileNode?.body?.content;
 
     if (!content) {
-      console.warn('[Setup Step 1] Không đọc được templates/product.json qua GraphQL');
+      console.warn('[Setup Step 1] Failed to read templates/product.json via GraphQL');
       return false;
     }
 
-    // Tìm app handle trong nội dung template
-    const hasAppBlock = content.includes('taitta-20252') || content.includes('app-sdk');
+    console.log('[Setup Step 1] templates/product.json content:', content);
+
+    // Support both old and new app handles for compatibility
+    const hasAppBlock = 
+      content.includes('taitta-20252') || 
+      content.includes('staging-virtual-try-on') || 
+      content.includes('app-embed') || 
+      content.includes('app-sdk');
+      
+    console.log('[Setup Step 1] App block check result:', hasAppBlock);
+
     return hasAppBlock;
   } catch (error) {
-    console.error('[Setup Step 1] LỖI:', error);
+    console.error('[Setup Step 1] ERROR:', error);
     return false;
   }
 };
 
 /**
- * Kiểm tra Bước 2: Shop đã cấu hình launch mode chưa?
+ * Step 2: Check if the store launch mode has been configured
  */
 export const checkAddProductStep = async (): Promise<boolean> => {
   try {
@@ -66,10 +75,10 @@ export const checkAddProductStep = async (): Promise<boolean> => {
     });
     const data = await res.json();
     const launchMode = data?.data?.shop?.metafield?.value;
-    // Có giá trị hợp lệ VÀ khác "none" (disable all) → đã cấu hình
+    // Launch mode is configured if it exists and is not disabled ('none')
     return !!launchMode && launchMode.length > 0 && launchMode !== 'none';
   } catch (error) {
-    console.warn('[Setup] Không thể kiểm tra metafield vto_launch_mode:', error);
+    console.warn('[Setup Step 2] Failed to check vto_launch_mode metafield:', error);
     return false;
   }
 };

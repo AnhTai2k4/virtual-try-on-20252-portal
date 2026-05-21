@@ -3,7 +3,7 @@ ui-save-bar(ref="saveBarRef")
   button(variant="primary" @click="saveAllSettings") Save
   button(@click="discardSettings") Discard
 
-ui-title-bar(title="Taitta VTON - Settings")
+ui-title-bar(title="Staging Virtual Try On - Settings")
 
 Page(title="Settings")
 

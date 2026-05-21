@@ -10,7 +10,7 @@ export const createSubscription = async (planKey: string) => {
         'Authorization': `Bearer ${token}`
 
       },
-      // Request body truyền lên { "plan": "go" }
+      // Request payload: { "plan": "go" }
       body: JSON.stringify({ plan: planKey })
     });
 
@@ -20,7 +20,7 @@ export const createSubscription = async (planKey: string) => {
 
     const result = await response.json();
 
-    // Trả về thẳng object 'data' theo cấu trúc ảnh image_bf375c.png
+    // Return response data
     return result.data;
   } catch (error) {
     console.error("[PricingService] Lỗi khi tạo subscription:", error);
@@ -45,7 +45,7 @@ export const fetchBillingUsage = async () => {
     }
 
     const result = await response.json();
-    return result.data; // Trả về object data chứa plan, usage, subscription...
+    return result.data; // Return usage and subscription details
   } catch (error) {
     console.error("[PricingService] Lỗi khi lấy thông tin usage:", error);
     throw error;
@@ -70,7 +70,7 @@ export const fetchBillingPlans = async () => {
     }
 
     const result = await response.json();
-    return result.data; // Trả về mảng các gói cước
+    return result.data; // Return array of pricing plans
   } catch (error) {
     console.error("[PricingService] Lỗi khi lấy danh sách gói cước:", error);
     throw error;
@@ -78,7 +78,7 @@ export const fetchBillingPlans = async () => {
 };
 
 /**
- * Gọi API Hủy gói cước hiện tại
+ * Cancel the current subscription plan
  */
 export const cancelSubscription = async () => {
   try {

@@ -1,5 +1,5 @@
 <template lang="pug">
-ui-title-bar(title="Taitta VTON - Analytics")
+ui-title-bar(title="Staging Virtual Try On - Analytics")
 Page(title="Analytics")
   
   //- =====================================

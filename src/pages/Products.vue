@@ -3,7 +3,7 @@ ui-save-bar(ref="saveBarRef")
   button(variant="primary" @click="applySettings") Save
   button(@click="resetSelection") Discard
 
-ui-title-bar(title="Taitta VTON - Products")
+ui-title-bar(title="Staging Virtual Try On - Products")
 
 Page(title="Product Management")
  
@@ -15,15 +15,15 @@ Page(title="Product Management")
           Text(variant="bodyMd" as="p" tone="subdued") Enable collections to activate try-on for all products, or select individual products for custom settings.
 
     LayoutSection
-      //- MAIN CARD: GIAO DIỆN "CHOOSE PRODUCT TO LAUNCH"
+      //- Main card: launch configuration
       Card
         div(style="position: relative;")
-          //- MÀN HÌNH LOADING CHỜ LẤY MODE BAN ĐẦU
+          //- Loading screen for initial setup
           div(v-if="isInitializing" style="position: absolute; inset: 0; z-index: 10; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;")
             Spinner(size="large")
             Text(variant="bodySm" fontWeight="medium" tone="subdued") Loading configuration...
 
-          //- NỘI DUNG CARD CHÍNH
+          //- Main content block
           BlockStack(:class="{ 'opacity-40 pointer-events-none transition-opacity': isInitializing }" gap="400")
             
             BlockStack(gap="200")
@@ -34,7 +34,7 @@ Page(title="Product Management")
             
             Divider
             
-            //- BODY (RADIO OPTIONS)
+            //- Radio button options for launch mode
             BlockStack(gap="400")
               
               //- Option 1: Specific products
@@ -81,7 +81,7 @@ Page(title="Product Management")
                 @change="() => { launchMode = 'none'; handleModeChange(); }"
               )
 
-            //- VÙNG CHỌN SẢN PHẨM & HIỂN THỊ DANH SÁCH
+            //- Product selection list container
             div(v-show="launchMode === 'specific_products' || launchMode === 'specific_variants'")
               Divider
               
@@ -90,12 +90,12 @@ Page(title="Product Management")
                   Button(@click="triggerPicker") {{ launchMode === 'specific_products' ? 'Choose products' : 'Choose variants' }}
                   Text(variant="bodySm" tone="subdued" fontWeight="medium") {{ selectedItems.length }} {{ launchMode === 'specific_products' ? 'products' : 'variants' }} selected
 
-                //- Loading State khi đang fetch data cũ
+                //- Loading state for selected items
                 BlockStack(v-if="isLoadingData" inlineAlign="center" style="padding: 40px 0; align-items: center;")
                   Spinner(size="small")
                   Text(variant="bodySm" tone="subdued") Loading selected items...
 
-                //- Danh sách Item đã chọn
+                //- List of selected items
                 div(v-else-if="selectedItems.length > 0" class="custom-scrollbar" style="border: 1px solid var(--p-color-border-subdued); border-radius: var(--p-border-radius-200); max-height: 320px; overflow-y: auto;")
                   div(
                     v-for="(item, index) in selectedItems" 
@@ -110,7 +110,7 @@ Page(title="Product Management")
                     
                     Button(plain destructive @click="removeItem(index)" ) Remove
                 
-                //- Empty State
+                //- Empty state
                 div(v-else style="padding: 40px 0; text-align: center; background: var(--p-color-bg-surface-secondary); border-radius: var(--p-border-radius-200); border: 1px dashed var(--p-color-border-subdued);")
                   Text(variant="headingLg" as="span") 🛍️
                   div(style="margin-top: 8px;")
@@ -122,7 +122,7 @@ Page(title="Product Management")
 import { ref, onMounted, watch } from 'vue';
 import { getShopData, getProductsData, batchUpdateMetafields } from '../service/ProductService';
 
-// Định nghĩa khung xương (Interface) cho 1 dòng dữ liệu hiển thị trên danh sách
+// Interface representing a selected product or variant item
 interface SelectedItem {
   id: string;
   title: string;
@@ -158,7 +158,7 @@ watch([launchMode, selectedItems, isLoadingData], () => {
 }, { deep: true });
 
 
-// HÀM LẤY DỮ LIỆU TỪ SHOPIFY (FETCH)
+// Fetch current launch configuration and selected items from Shopify
 const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> => {
   if (isInitialLoad) isInitializing.value = true;
   else isLoadingData.value = true;
@@ -174,7 +174,7 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
       launchMode.value = shop.launchMode?.value || 'specific_products';
     }
 
-    // TỐI ƯU: Chỉ gọi API tải toàn bộ sản phẩm nếu mode là "specific"
+    // Fetch products only if mode requires selection
     if (launchMode.value === 'specific_products' || launchMode.value === 'specific_variants') {
       const products = await getProductsData();
 
@@ -216,7 +216,7 @@ const fetchCurrentState = async (isInitialLoad: boolean = false): Promise<void> 
   }
 };
 
-// CÁC HÀM XỬ LÝ SỰ KIỆN GIAO DIỆN (UI ACTIONS)
+// UI event handlers
 
 const handleModeChange = (): Promise<void> => fetchCurrentState(false);
 const resetSelection = (): Promise<void> => fetchCurrentState(true);
@@ -272,20 +272,20 @@ const triggerPicker = async (): Promise<void> => {
   selectedItems.value = finalSelectionList;
 };
 
-// THUẬT TOÁN ĐỒNG BỘ VÀ LƯU TRỮ (APPLY)
+// Save configuration to Shopify Metafields
 const applySettings = async (): Promise<void> => {
   isApplying.value = true;
   
   try {
     const isAllMode = launchMode.value === 'all';
     
-    // Lưu chế độ launchMode mới (nếu là 'none' thì tự động disable bên file Liquid)
+    // Update global launch mode metafields
     await batchUpdateMetafields([shopId.value as string], [
       { namespace: "custom", key: "vto_launch_mode", value: launchMode.value },
       { namespace: "custom", key: "vto_enable_all", value: isAllMode ? "true" : "false" }
     ]);
 
-    // TỐI ƯU: Chỉ cập nhật Metafield cho từng item nếu đang ở chế độ Specific
+    // Update individual product/variant VTO enabled status
     if (launchMode.value === 'specific_products' || launchMode.value === 'specific_variants') {
       const currentSelectedIds = selectedItems.value.map(i => i.id);
       const idsToTurnOn = currentSelectedIds.filter(id => !previouslyEnabledIds.value.includes(id));

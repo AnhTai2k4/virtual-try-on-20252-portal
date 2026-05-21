@@ -3,7 +3,7 @@ ui-save-bar(ref="saveBarRef")
   button(variant="primary" @click="saveSettings") Save
   button(@click="discardSettings") Discard
 
-ui-title-bar(title="Taitta VTON - Customize")
+ui-title-bar(title="Staging Virtual Try On - Customize")
 
 Page(title="Customize Appearance" )
 
@@ -175,9 +175,9 @@ const initialSettingsStr = ref("");
 
 // Dữ liệu cài đặt mặc định
 const settings = reactive({
-  bgColor: '#111111',
+  bgColor: '#000000',
   textColor: '#FFFFFF',
-  buttonText: 'Virtual Try-On',
+  buttonText: '✨ Virtual Try On ✨',
   titleText: 'See how you look good in this outfit',
   paddingTop: 16,
   paddingBottom: 16,
@@ -188,9 +188,9 @@ const settings = reactive({
 
 // Hàm Reset về mặc định
 const resetToDefaults = () => {
-  settings.bgColor = '#111111';
+  settings.bgColor = '#000000';
   settings.textColor = '#FFFFFF';
-  settings.buttonText = '✨Virtual Try-On';
+  settings.buttonText = '✨ Virtual Try On ✨';
   settings.titleText = 'See how you look good in this outfit';
   settings.paddingTop = 16;
   settings.paddingBottom = 16;

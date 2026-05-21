@@ -9,6 +9,7 @@ ui-nav-menu
   a(href="/analytics") Analytics
   a(href="/pricings") Pricing
   a(href="/settings") Settings
+  a(href="/document") Document
 </template>
 
 <script setup lang="ts">

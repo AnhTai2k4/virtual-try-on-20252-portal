@@ -30,7 +30,7 @@ export const getCustomizationSettings = async () => {
     const shop = result.data?.shop;
     let settings = null;
     
-    // Bóc tách JSON nếu Shop đã từng lưu cài đặt
+    // Parse JSON settings if they exist
     if (shop?.metafield?.value) {
       settings = JSON.parse(shop.metafield.value);
     }
@@ -43,7 +43,7 @@ export const getCustomizationSettings = async () => {
 };
 
 /**
- * Lưu cài đặt giao diện lên Metafield của Shop
+ * Save customization settings to Shop metafields via GraphQL
  */
 export const updateCustomizationSettings = async (shopId: string, settingsData: any) => {
   try {

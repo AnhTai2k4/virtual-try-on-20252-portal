@@ -1,5 +1,5 @@
 <template lang="pug">
-ui-title-bar(title="Taitta VTON - Dashboard")
+ui-title-bar(title="Staging Virtual Try On - Dashboard")
 Page(title="Dashboard")
   Layout(style = "margin-bottom: 2rem;")
     LayoutSection
@@ -24,9 +24,9 @@ Page(title="Dashboard")
 
     LayoutSection
       Banner(v-if="setupSteps.addButton && setupSteps.addProduct" title="Widget Added Successfully" tone="success")
-        p Perfect! The Taitta Try-On button is now live on your product pages. Your customers can start trying on items virtually right away.
+        p Perfect! The Virtual Try-On button is now live on your product pages. Your customers can start trying on items virtually right away.
 
-      Banner(v-else title="Finish setting up Taitta VTON" tone="info")
+      Banner(v-else title="Finish setting up Staging Virtual Try On" tone="info")
         //- Hiển thị Loading Spinner trong lúc fetch
         BlockStack(v-if="isRefreshingSteps" inlineAlign="center" style="padding: 16px 0; align-items: center;")
           Spinner(size="large")
@@ -34,9 +34,9 @@ Page(title="Dashboard")
           
         //- Hiển thị 2 bước khi fetch xong
         template(v-else)
-          BlockStack(gap="400")
-          InlineStack(align="space-between" blockAlign="center")
-            Text(variant="bodyMd" as="p" tone="subdued") Two quick steps to activate Taitta on your storefront. Complete them in order.
+          BlockStack(gap="400" )
+          InlineStack(align="space-between" blockAlign="center" style="padding-bottom: 1rem;")
+            Text(variant="bodyMd" as="p" tone="subdued") Two quick steps to activate Virtual Try-On on your storefront. Complete them in order.
             Button(variant="plain" @click="refreshSetupSteps" :loading="isRefreshingSteps" icon="RefreshIcon") Refresh
 
           BlockStack(gap="400")
@@ -81,7 +81,7 @@ Page(title="Dashboard")
             ProgressBar(:progress="usagePercentage" color="primary")
 
     LayoutSection
-      Banner(v-if="showUpgradeBanner" title="Upgrade for More Try-Ons" status="success" @dismiss="showUpgradeBanner = false" :action="{ content: 'Upgrade', onAction: () => navigateTo('/plan') }")
+      Banner(v-if="showUpgradeBanner" title="Upgrade for More Try-Ons" status="success" @dismiss="showUpgradeBanner = false" :action="{ content: 'Upgrade', onAction: () => navigateTo('/pricings') }")
         p Unlock unlimited virtual try-ons and professional AI studio features to grow your store's sales.
 
     LayoutSection
@@ -89,10 +89,11 @@ Page(title="Dashboard")
         BlockStack(gap="400")
           Text(variant="headingMd" as="h2") Quick Actions
           InlineStack(gap="300" wrap)
-            Button(@click="navigateTo('/analytics')") 📊 View Analytics
-            Button(@click="navigateTo('/plan')") 💳 Manage Plan
-            Button(@click="navigateTo('/customize')") 🎨 Customize Widget
+            Button(@click="navigateTo('/customizes')") 🎨 Customize Widget
             Button(@click="navigateTo('/products')") 📦 Product Manage
+            Button(@click="navigateTo('/analytics')") 📊 View Analytics
+            Button(@click="navigateTo('/pricings')") 💳 Manage Plan
+            
 
     LayoutSection
       Card
@@ -104,7 +105,7 @@ Page(title="Dashboard")
           InlineStack(gap="300" align="start")
             Button(plain @click="navigateTo('/support')") ✉ Contact email support
             Button(plain @click="navigateTo('/support')") 🗩 Contact live chat support
-            Button(plain @click="navigateTo('/support')") ❔ Help center
+            Button(plain @click="navigateTo('/document')") ❔ Help center
 </template>
 
 <script setup>

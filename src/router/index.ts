@@ -8,6 +8,7 @@ import Analytics from '@/pages/Analytics.vue';
 import Customize from '@/pages/Customize.vue';
 import Products from '@/pages/Products.vue';
 import Pricings from '@/pages/Pricings.vue';
+import Document from '@/pages/Document.vue';
 
 
 const routes = [
@@ -48,6 +49,11 @@ const routes = [
         path: 'products',
         name: 'products',
         component: Products,
+      },
+      {
+        path: 'document',
+        name: 'document',
+        component: Document,
       }
     ],
   },

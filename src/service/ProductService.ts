@@ -1,4 +1,4 @@
-// Định nghĩa kiểu cho Metafield để TypeScript bắt lỗi nếu truyền thiếu dữ liệu
+// Metafield definition interface for type safety
 export interface MetafieldDef {
   namespace: string;
   key: string;
@@ -6,7 +6,7 @@ export interface MetafieldDef {
 }
 
 /**
- * Lấy token xác thực từ App Bridge của Shopify
+ * Retrieve session token from Shopify App Bridge
  */
 const initToken = async (): Promise<void> => {
   const shopifyObj = (window as any).shopify;
@@ -16,7 +16,7 @@ const initToken = async (): Promise<void> => {
 };
 
 /**
- * 1. Gọi API lấy thông tin cấu hình VTO Mode hiện tại của Shop
+ * Retrieve launch configuration from Shopify metafields
  */
 export const getShopData = async (): Promise<any> => {
   await initToken();
@@ -40,7 +40,7 @@ export const getShopData = async (): Promise<any> => {
 };
 
 /**
- * 2. Gọi API lấy toàn bộ danh sách Sản phẩm và Biến thể
+ * Retrieve list of products and variants with VTO status metafields
  */
 export const getProductsData = async (): Promise<any[]> => {
   await initToken();
@@ -77,7 +77,7 @@ export const getProductsData = async (): Promise<any[]> => {
 };
 
 /**
- * 3. Cập nhật Metafield hàng loạt cho Shopify (Tự động chia nhỏ 25 item/lần)
+ * Batch update metafields in chunks of 25
  */
 export const batchUpdateMetafields = async (ownerIds: string[], metafieldDefs: MetafieldDef[]): Promise<void> => {
   await initToken();

@@ -74,7 +74,7 @@ export const fetchShopifyMetafield = async () => {
       }
     }
 
-    // Trả về một Object chứa cả Shop ID và trạng thái Login
+    // Return object containing Shop ID and login status
     return { shopId, requireLogin };
   } catch (error) {
     console.error("[SettingService] Lỗi khi tải Shopify Metafield:", error);
@@ -83,7 +83,7 @@ export const fetchShopifyMetafield = async () => {
 };
 
 /**
- * Cập nhật Metafield require_login lên Shopify Admin API
+ * Update require_login metafield via Shopify Admin API
  */
 export const updateShopifyMetafield = async (shopId: string, requireLogin: boolean) => {
   if (!shopId) throw new Error("Shop ID missing. Cannot update metafield.");
@@ -120,7 +120,7 @@ export const updateShopifyMetafield = async (shopId: string, requireLogin: boole
       throw new Error(result.data.metafieldsSet.userErrors[0].message);
     }
 
-    return true; // Trả về true nếu thành công
+    return true; // Return true on success
   } catch (error) {
     console.error("[SettingService] Lỗi khi cập nhật Shopify Metafield:", error);
     throw error;
