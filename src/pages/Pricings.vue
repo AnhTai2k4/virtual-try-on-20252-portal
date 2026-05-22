@@ -106,7 +106,7 @@ const currentPlanData = ref({
 // "MORE ACTIONS" BUTTON INTERFACE CONFIGURATION
 // ==========================================
 const pageActionGroups = computed(() => {
-  const actionsList = [
+  const actionsList: any[] = [
     {
       content: 'Get support',
       onAction: () => router.push('/document'),
