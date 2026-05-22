@@ -85,7 +85,11 @@ Page(
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { createSubscription, fetchBillingUsage, fetchBillingPlans, cancelSubscription } from '../service/PricingService';
+
+const router = useRouter();
+
 // ==========================================
 // STATE
 // ==========================================
@@ -102,22 +106,26 @@ const currentPlanData = ref({
 // "MORE ACTIONS" BUTTON INTERFACE CONFIGURATION
 // ==========================================
 const pageActionGroups = computed(() => {
-  // If using Free Trial, hide More actions button
-  if (currentPlanData.value.name === 'Free Trial' || currentPlanData.value.name === 'Trial') {
-    return [];
+  const actionsList = [
+    {
+      content: 'Get support',
+      onAction: () => router.push('/document'),
+    }
+  ];
+
+  // If using a paid plan, also show Cancel subscription
+  if (currentPlanData.value.name !== 'Free Trial' && currentPlanData.value.name !== 'Trial') {
+    actionsList.push({
+      content: 'Cancel subscription',
+      destructive: true, // This attribute makes the text red (Danger warning)
+      onAction: handleCancelSubscription,
+    });
   }
 
-  // If using a paid plan, render the Dropdown
   return [
     {
       title: 'More actions',
-      actions: [
-        {
-          content: 'Cancel subscription',
-          destructive: true, // This attribute makes the text red (Danger warning)
-          onAction: handleCancelSubscription,
-        },
-      ],
+      actions: actionsList,
     },
   ];
 });

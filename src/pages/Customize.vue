@@ -25,17 +25,17 @@ Page(title="Customize Appearance" )
           //- 1. Background Color
           BlockStack(gap="200")
             Text(variant="bodyMd" as="label" fontWeight="medium") Background Color
-            InlineStack(gap="300" blockAlign="start")
+            InlineStack(gap="300" blockAlign="center")
               //- Native color picker button combined with Polaris
               div(style="position: relative; width: 40px; height: 40px; border-radius: 4px; border: 1px solid #8c9196; overflow: hidden; cursor: pointer; flex-shrink: 0;")
                 input(type="color" v-model="settings.bgColor" style="position: absolute; top: -8px; left: -8px; width: 56px; height: 56px; cursor: pointer; border: none; outline: none;")
               div(style="max-width: 200px;")
                 TextField(v-model="settings.bgColor" autoComplete="off")
-
+ 
           //- 2. Text & Icon Color
           BlockStack(gap="200")
             Text(variant="bodyMd" as="label" fontWeight="medium") Text & Icon Color
-            InlineStack(gap="300" blockAlign="start")
+            InlineStack(gap="300" blockAlign="center")
               div(style="position: relative; width: 40px; height: 40px; border-radius: 4px; border: 1px solid #8c9196; overflow: hidden; cursor: pointer; flex-shrink: 0;")
                 input(type="color" v-model="settings.textColor" style="position: absolute; top: -8px; left: -8px; width: 56px; height: 56px; cursor: pointer; border: none; outline: none;")
               div(style="max-width: 200px;")
@@ -95,19 +95,19 @@ Page(title="Customize Appearance" )
             Select(
               label="Button Shape"
               v-model="settings.buttonShape"
-              :options="[{ label: 'Square', value: 'square' }, { label: 'Rounded', value: 'rounded' }, { label: 'Pill', value: 'pill' }]"
+              :options="buttonShapeOptions"
             )
 
             Select(
               label="Font Family"
               v-model="settings.fontFamily"
-              :options="[{ label: 'Theme Default', value: 'inherit' }, { label: 'Sans-serif', value: 'sans-serif' }, { label: 'Serif', value: 'serif' }, { label: 'Monospace', value: 'monospace' }, { label: 'Georgia', value: 'Georgia, serif' }, { label: 'Times New Roman', value: 'Times New Roman, serif' }, { label: 'Arial', value: 'Arial, sans-serif' }]"
+              :options="fontFamilyOptions"
             )
 
             Select(
               label="Button Width"
               v-model="settings.buttonWidth"
-              :options="[{ label: 'Full Width', value: 'full' }, { label: 'Fit Content', value: 'auto' }]"
+              :options="buttonWidthOptions"
             )
 
           Divider
@@ -164,6 +164,28 @@ import {
 
 // IMPORT FROM SERVICE FILE
 import { getCustomizationSettings, updateCustomizationSettings } from '@/service/CustomizeService';
+
+// --- OPTIONS FOR SELECTS ---
+const buttonShapeOptions = [
+  { label: 'Square', value: 'square' },
+  { label: 'Rounded', value: 'rounded' },
+  { label: 'Pill', value: 'pill' }
+];
+
+const fontFamilyOptions = [
+  { label: 'Theme Default', value: 'inherit' },
+  { label: 'Sans-serif', value: 'sans-serif' },
+  { label: 'Serif', value: 'serif' },
+  { label: 'Monospace', value: 'monospace' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Times New Roman', value: 'Times New Roman, serif' },
+  { label: 'Arial', value: 'Arial, sans-serif' }
+];
+
+const buttonWidthOptions = [
+  { label: 'Full Width', value: 'full' },
+  { label: 'Fit Content', value: 'auto' }
+];
 
 // --- BASIC STATE ---
 const isSaving = ref(false);

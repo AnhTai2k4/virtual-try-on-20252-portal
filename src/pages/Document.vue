@@ -4,7 +4,7 @@ Page(title="Help Center & Documentation")
     LayoutSection
       Card
         BlockStack(gap="400")
-          Text(variant="headingLg" as="h2") Welcome to Taitta VTON Documentation
+          Text(variant="headingLg" as="h2") Welcome to Virtual Try-On Documentation
           Text(variant="bodyMd" as="p" tone="subdued") Find all the information you need to successfully install, configure, and manage the Virtual Try-On application on your Shopify store.
 
     LayoutSection

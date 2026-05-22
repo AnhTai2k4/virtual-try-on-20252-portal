@@ -89,10 +89,11 @@ Page(title="Dashboard")
         BlockStack(gap="400")
           Text(variant="headingMd" as="h2") Quick Actions
           InlineStack(gap="300" wrap)
-            Button(@click="navigateTo('/customizes')") 🎨 Customize Widget
-            Button(@click="navigateTo('/products')") 📦 Product Manage
-            Button(@click="navigateTo('/analytics')") 📊 View Analytics
-            Button(@click="navigateTo('/pricings')") 💳 Manage Plan
+            Button(
+              v-for="action in quickActions"
+              :key="action.path"
+              @click="navigateTo(action.path)"
+            ) {{ action.label }}
             
 
     LayoutSection
@@ -103,18 +104,34 @@ Page(title="Dashboard")
             Text(variant="bodyMd" as="p") Our support team is here to assist you with any questions or issues.
           
           InlineStack(gap="300" align="start")
-            Button(plain @click="navigateTo('/support')") ✉ Contact email support
-            Button(plain @click="navigateTo('/support')") 🗩 Contact live chat support
-            Button(plain @click="navigateTo('/document')") ❔ Help center
+            Button(
+              v-for="link in helpLinks"
+              :key="link.label"
+              :plain="link.plain"
+              @click="navigateTo(link.path)"
+            ) {{ link.label }}
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchBillingUsage } from '../service/PricingService';
-import { checkAddButtonStep, checkAddProductStep } from '../service/DashboardService';
+import { checkAddButtonStep, checkAddProductStep, fetchFirstProductHandle } from '../service/DashboardService';
 
 const router = useRouter();
+
+const quickActions = [
+  { label: '🎨 Customize Widget', path: '/customizes' },
+  { label: '📦 Product Manage', path: '/products' },
+  { label: '📊 View Analytics', path: '/analytics' },
+  { label: '💳 Manage Plan', path: '/pricings' }
+];
+
+const helpLinks = [
+  { label: '✉ Contact email support', path: '/support', plain: true },
+  { label: '🗩 Contact live chat support', path: '/support', plain: true },
+  { label: '❔ Help center', path: '/document', plain: true }
+];
 
 // API and URL Data
 const shopDomain = ref('');
@@ -161,13 +178,19 @@ const navigateTo = (path) => {
 };
 
 // Action to open Shopify Theme Editor (Logic to be processed later)
-const goToThemeEditor = () => {
+const goToThemeEditor = async () => {
   // 1. Retrieve the shop domain from URL (Shopify passes the 'shop' query parameter to your iframe)
   const urlParams = new URLSearchParams(window.location.search);
   const shopDomain = urlParams.get('shop') ; 
 
+  let previewPath = '';
+  const handle = await fetchFirstProductHandle();
+  if (handle) {
+    previewPath = `?previewPath=${encodeURIComponent('/products/' + handle)}`;
+  }
+
   // 2. Construct the full Admin link pointing directly to the Theme Editor
-  const themeEditorUrl = `https://${shopDomain}/admin/themes/current/editor`;
+  const themeEditorUrl = `https://${shopDomain}/admin/themes/current/editor${previewPath}`;
 
   // 3. Use '_blank' to open the link in a new browser tab
   window.open(themeEditorUrl, '_blank');

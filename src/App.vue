@@ -7,8 +7,8 @@ ui-nav-menu
   a(href="/products") Products
   a(href="/customizes") Customize
   a(href="/analytics") Analytics
-  a(href="/pricings") Pricing
   a(href="/settings") Settings
+  a(href="/pricings") Pricing
   a(href="/document") Document
 </template>
 

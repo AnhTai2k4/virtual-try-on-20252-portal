@@ -46,10 +46,8 @@ Page(title="Analytics")
             Tooltip(content="Total products converted to order / Total successful try-ons")
               Text(variant="headingSm" as="span" fontWeight="medium")
                 span(style="cursor: help; border-bottom: 1px dashed var(--p-color-border-subdued);") Order Conversion Rate
-            div(v-if="orderConversionRate > 0" style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
-              Text(variant="headingXl" as="p") {{ orderConversionRate.toFixed(1) }} %
-            Banner(v-else tone="info")
-              p No order conversion data available yet.
+            div(style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
+              Text(variant="headingXl" as="p") {{ orderConversionRate > 0 ? orderConversionRate.toFixed(1) + ' %' : '--' }}
             
         //- Column 2: Cart Conversion Rate
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
@@ -57,27 +55,22 @@ Page(title="Analytics")
             Tooltip(content="Total products converted to cart / Total successful try-ons")
               Text(variant="headingSm" as="span" fontWeight="medium")
                 span(style="cursor: help; border-bottom: 1px dashed var(--p-color-border-subdued);") Cart Conversion Rate
-            div(v-if="cartConversionRate > 0" style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
-              Text(variant="headingXl" as="p") {{ cartConversionRate.toFixed(1) }} %
-            Banner(v-else tone="info")
-              p No cart conversion data available yet.
+            div(style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
+              Text(variant="headingXl" as="p") {{ cartConversionRate > 0 ? cartConversionRate.toFixed(1) + ' %' : '--' }}
             
         //- Column 3: Button Click
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding: 0 var(--p-space-600); border-left: 1px solid var(--p-color-border-subdued);")
             Text(variant="headingSm" as="h3" fontWeight="medium") Total Try-Ons
-            div(v-if="totalRequests > 0" style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
-              Text(variant="headingXl" as="p") {{ totalRequests }}
-            Banner(v-else tone="info")
-              p No click data available yet.
+            div(style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
+              Text(variant="headingXl" as="p") {{ totalRequests > 0 ? totalRequests : '--' }}
             
         //- Column 4: Total Generations
         GridCell(:columnSpan="{xs: 6, sm: 6, md: 3, lg: 3, xl: 3}")
           BlockStack(gap="200" style="padding-left: var(--p-space-600); border-left: 1px solid var(--p-color-border-subdued);")
             Text(variant="headingSm" as="h3" fontWeight="medium") Total Successful Try-Ons 
             div(style="padding-top: var(--p-space-200); padding-bottom: var(--p-space-200);")
-              Text(v-if="totalGenerations > 0" variant="heading3xl" as="p") {{ totalGenerations }}
-              Text(v-else variant="heading3xl" as="p") 0
+              Text(variant="headingXl" as="p") {{ totalGenerations > 0 ? totalGenerations : '--' }}
 
     //- CARD 2: CHARTS
     Card
@@ -140,7 +133,7 @@ ChartJS.register(Title, ChartTooltip, Legend, LineElement, PointElement, Categor
 // DATA MANAGEMENT STATE
 // ==========================================
 const isLoading = ref(true); // LOADING STATE VARIABLE
-const selectedPeriod = ref('30'); // Defaults to Last 30 days
+const selectedPeriod = ref('7'); // Defaults to Last 30 days
 const customStartDate = ref('');
 const customEndDate = ref('');
 

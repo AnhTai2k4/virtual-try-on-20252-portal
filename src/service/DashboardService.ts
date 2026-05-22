@@ -83,3 +83,29 @@ export const checkAddProductStep = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Fetch the handle of the first product in the store
+ */
+export const fetchFirstProductHandle = async (): Promise<string | null> => {
+  try {
+    const res = await fetch('shopify:admin/api/2026-04/graphql.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `{
+          products(first: 1) {
+            nodes {
+              handle
+            }
+          }
+        }`
+      })
+    });
+    const data = await res.json();
+    return data?.data?.products?.nodes?.[0]?.handle || null;
+  } catch (error) {
+    console.error('[DashboardService] Error fetching first product handle:', error);
+    return null;
+  }
+};
