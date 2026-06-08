@@ -110,11 +110,7 @@ Page(title="Customize Appearance" )
               :options="buttonWidthOptions"
             )
 
-          Divider
 
-          //- 8. Footer Actions
-          InlineStack(align="start")
-            Button(@click="resetToDefaults") Reset to Defaults
 
     //- RIGHT COLUMN: PREVIEW AREA
     //- Use variant="oneThird" to make this column smaller than settings column
@@ -195,8 +191,8 @@ const shopId = ref(null);
 const saveBarRef = ref(null);
 const initialSettingsStr = ref("");
 
-// Default customization settings
-const settings = reactive({
+// Default settings
+const HARDCODED_DEFAULTS = {
   bgColor: '#000000',
   textColor: '#FFFFFF',
   buttonText: '✨ Virtual Try On ✨',
@@ -206,20 +202,9 @@ const settings = reactive({
   buttonShape: 'rounded',
   fontFamily: 'inherit',
   buttonWidth: 'full'
-});
-
-// Action to reset to default settings
-const resetToDefaults = () => {
-  settings.bgColor = '#000000';
-  settings.textColor = '#FFFFFF';
-  settings.buttonText = '✨ Virtual Try On ✨';
-  settings.titleText = 'See how you look good in this outfit';
-  settings.paddingTop = 16;
-  settings.paddingBottom = 16;
-  settings.buttonShape = 'rounded';
-  settings.fontFamily = 'inherit';
-  settings.buttonWidth = 'full';
 };
+
+const settings = reactive({ ...HARDCODED_DEFAULTS });
 
 watch(settings, (newVal) => {
   if (isPageLoading.value) return;
@@ -237,10 +222,8 @@ const discardSettings = () => {
   }
   if (saveBarRef.value?.hide) saveBarRef.value.hide();
 };
-
-// ==========================================================
 // 1. LOAD SETTINGS ACTION
-// ==========================================================
+
 const loadSettings = async () => {
   isPageLoading.value = true;
   try {
@@ -249,17 +232,17 @@ const loadSettings = async () => {
 
     if (data.shopId) shopId.value = data.shopId;
 
-    // Override Vue state if previous settings exist
+    // Override settings if previous settings exist in metafields
     if (data.settings) {
-      settings.bgColor = data.settings.bgColor || '#111111';
-      settings.textColor = data.settings.textColor || '#FFFFFF';
-      settings.buttonText = data.settings.buttonText || 'Virtual Try-On';
-      settings.titleText = data.settings.titleText || 'See how you look good in this outfit';
-      settings.paddingTop = data.settings.paddingTop !== undefined ? data.settings.paddingTop : 16;
-      settings.paddingBottom = data.settings.paddingBottom !== undefined ? data.settings.paddingBottom : 16;
-      settings.buttonShape = data.settings.buttonShape || 'rounded';
-      settings.fontFamily = data.settings.fontFamily || 'inherit';
-      settings.buttonWidth = data.settings.buttonWidth || 'full';
+      settings.bgColor = data.settings.bgColor || HARDCODED_DEFAULTS.bgColor;
+      settings.textColor = data.settings.textColor || HARDCODED_DEFAULTS.textColor;
+      settings.buttonText = data.settings.buttonText || HARDCODED_DEFAULTS.buttonText;
+      settings.titleText = data.settings.titleText || HARDCODED_DEFAULTS.titleText;
+      settings.paddingTop = data.settings.paddingTop !== undefined ? data.settings.paddingTop : HARDCODED_DEFAULTS.paddingTop;
+      settings.paddingBottom = data.settings.paddingBottom !== undefined ? data.settings.paddingBottom : HARDCODED_DEFAULTS.paddingBottom;
+      settings.buttonShape = data.settings.buttonShape || HARDCODED_DEFAULTS.buttonShape;
+      settings.fontFamily = data.settings.fontFamily || HARDCODED_DEFAULTS.fontFamily;
+      settings.buttonWidth = data.settings.buttonWidth || HARDCODED_DEFAULTS.buttonWidth;
     }
 
     initialSettingsStr.value = JSON.stringify(settings);
@@ -272,9 +255,7 @@ const loadSettings = async () => {
   }
 };
 
-// ==========================================================
 // 2. SAVE SETTINGS ACTION
-// ==========================================================
 const saveSettings = async () => {
   if (!shopId.value) {
     console.error("Shop ID is missing, cannot save.");
@@ -303,4 +284,5 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+</style>

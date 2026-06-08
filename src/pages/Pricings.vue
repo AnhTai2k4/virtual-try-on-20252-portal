@@ -106,21 +106,23 @@ const currentPlanData = ref({
 // "MORE ACTIONS" BUTTON INTERFACE CONFIGURATION
 // ==========================================
 const pageActionGroups = computed(() => {
-  const actionsList: any[] = [
-    {
-      content: 'Get support',
-      onAction: () => router.push('/document'),
-    }
-  ];
+  const actionsList: any[] = [];
 
   // If using a paid plan, also show Cancel subscription
-  if (currentPlanData.value.name !== 'Free Trial' && currentPlanData.value.name !== 'Trial') {
+  const planName = (currentPlanData.value.name || '').toLowerCase();
+  const isFreePlan = planName.includes('free') || planName.includes('trial') || planName === '';
+  if (!isFreePlan) {
     actionsList.push({
       content: 'Cancel subscription',
       destructive: true, // This attribute makes the text red (Danger warning)
       onAction: handleCancelSubscription,
     });
   }
+
+  actionsList.push({
+    content: 'Get support',
+    onAction: () => router.push('/document'),
+  });
 
   return [
     {
